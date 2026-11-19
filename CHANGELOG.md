@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1 — 2026-11-19
+
+- New Aurora app icon (widget, media controller and visualizers)
+- The player now announces a desktop entry, so media controllers show its icon and name
+- Empty or junk stream titles (" - ", "Unknown", a lone artist) no longer blank out the track
+  name; the station name is shown instead
+
 ## 1.1.0 — 2026-11-19
 
 **Egypt Radio is now Aurora Radio** and serves listeners everywhere.

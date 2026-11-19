@@ -61,7 +61,9 @@ PlasmoidItem {
         Qt.resolvedUrl("../code/radioctl.py").toString().replace(/^file:\/\//, ""))
 
     // ---------- plasmoid ----------
-    Plasmoid.icon: cfg.customIcon || "radio"
+    // bundled Aurora icon unless the user picked one (older configs stored "radio" as default)
+    Plasmoid.icon: (cfg.customIcon && cfg.customIcon !== "radio") ? cfg.customIcon
+                   : Qt.resolvedUrl("../images/aurora-radio.svg")
     Plasmoid.backgroundHints: PlasmaCore.Types.DefaultBackground | PlasmaCore.Types.ConfigurableBackground
     Plasmoid.status: wantPlaying ? PlasmaCore.Types.ActiveStatus : PlasmaCore.Types.PassiveStatus
     toolTipMainText: previewing ? previewName : (current ? current.name : t("راديو أورورا"))

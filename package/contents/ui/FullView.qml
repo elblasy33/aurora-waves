@@ -377,12 +377,11 @@ Item {
                 Layout.fillHeight: true
                 spacing: Kirigami.Units.largeSpacing
                 Item { Layout.fillHeight: true }
-                StationLogo {
+                Kirigami.Icon {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: Kirigami.Units.gridUnit * 4.5
                     Layout.preferredHeight: Layout.preferredWidth
-                    logo: "icon:" + Plasmoid.icon
-                    tint: Kirigami.Theme.highlightColor
+                    source: Plasmoid.icon
                 }
                 Kirigami.Heading {
                     Layout.fillWidth: true

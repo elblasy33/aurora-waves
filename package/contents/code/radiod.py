@@ -10,6 +10,7 @@ request per connection, one JSON reply).
 """
 import json
 import os
+import re
 import socket
 import subprocess
 import sys
@@ -27,6 +28,7 @@ BUS_NAME = "org.mpris.MediaPlayer2.auroraradio"
 OBJ_PATH = "/org/mpris/MediaPlayer2"
 IDLE_EXIT_SECS = 180          # daemon leaves after being stopped this long
 APP_NAME = "Aurora Radio"
+DESKTOP_ID = "aurora-radio"          # MPRIS DesktopEntry -> icon and name in media controllers
 
 MPRIS_XML = """
 <node>
@@ -73,6 +75,42 @@ MPRIS_XML = """
 """
 
 LOCAL_KINDS = ("file", "folder", "playlist")
+
+
+def install_desktop_entry():
+    """Media controllers find a player's icon and name through its .desktop file."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    icon = os.path.normpath(os.path.join(here, "..", "images", "aurora-radio.svg"))
+    apps = os.path.join(os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share"), "applications")
+    path = os.path.join(apps, DESKTOP_ID + ".desktop")
+    body = "\n".join([
+        "[Desktop Entry]",
+        "Type=Application",
+        "Name=Aurora Radio",
+        "Name[ar]=راديو أورورا",
+        "Comment=Live radio widget for KDE Plasma",
+        "Icon=" + icon,
+        "Exec=true",
+        "NoDisplay=true",
+        "Categories=AudioVideo;Audio;Player;",
+        "",
+    ])
+    try:
+        if not os.path.exists(path) or open(path, encoding="utf-8").read() != body:
+            os.makedirs(apps, exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(body)
+    except OSError:
+        pass
+
+
+def clean_title(t):
+    """Stream titles are often junk: " - ", "-", "Unknown", or one half of "Artist - Title"."""
+    t = re.sub(r"\s+", " ", str(t or "")).strip()
+    t = re.sub(r"^[\s\-\u2013\u2014|:~.]+|[\s\-\u2013\u2014|:~.]+$", "", t)   # dangling separators
+    if not re.search(r"\w", t) or t.lower() in ("unknown", "unknown - unknown", "n/a", "null", "untitled"):
+        return ""
+    return t
 
 
 def station_kind(st):
@@ -377,9 +415,9 @@ class Daemon:
         p = self.mpv.props
         meta = p.get("metadata") or {}
         lower = {str(k).lower(): v for k, v in meta.items()}
-        icy = lower.get("icy-title") or lower.get("streamtitle") or ""
+        icy = clean_title(lower.get("icy-title") or lower.get("streamtitle") or "")
         if self.is_local():
-            title = lower.get("title") or p.get("media-title") or name
+            title = clean_title(lower.get("title")) or clean_title(p.get("media-title")) or name
             artist = lower.get("artist") or name
             return title, artist, lower.get("album") or name
         if icy:
@@ -415,7 +453,7 @@ class Daemon:
                 "CanRaise": GLib.Variant("b", False),
                 "HasTrackList": GLib.Variant("b", False),
                 "Identity": GLib.Variant("s", self.app_name),
-                "DesktopEntry": GLib.Variant("s", ""),
+                "DesktopEntry": GLib.Variant("s", DESKTOP_ID),
                 "SupportedUriSchemes": GLib.Variant("as", ["http", "https", "file"]),
                 "SupportedMimeTypes": GLib.Variant("as", ["audio/mpeg", "audio/aac", "application/x-mpegurl"]),
             }
@@ -601,6 +639,7 @@ class Daemon:
         server.listen(8)
         GLib.io_add_watch(server.fileno(), GLib.IO_IN, self._on_client, server)
         GLib.timeout_add(1000, self.tick)
+        install_desktop_entry()
         self.enable_mpris(True)
         try:
             self.loop.run()

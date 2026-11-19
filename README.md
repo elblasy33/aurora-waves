@@ -70,7 +70,7 @@ download the latest `aurora-radio-x.y.z.plasmoid` from
 [Releases](https://github.com/elblasy33/plasma_radio_deploy/releases), then:
 
 ```sh
-kpackagetool6 -t Plasma/Applet -i aurora-radio-1.1.0.plasmoid
+kpackagetool6 -t Plasma/Applet -i aurora-radio-1.1.1.plasmoid
 ```
 
 or go to **Add Widgets… → Get New Widgets… → Install Widget From Local File…**
@@ -98,7 +98,8 @@ stations from your country.
 
 ```sh
 kpackagetool6 -t Plasma/Applet -r com.github.elblasy33.auroraradio
-rm -rf ~/.local/share/aurora-radio ~/.cache/aurora-radio     # optional: saved logos and cover art
+rm -f ~/.local/share/applications/aurora-radio.desktop     # media-controller icon entry
+rm -rf ~/.local/share/aurora-radio ~/.cache/aurora-radio    # optional: saved logos and cover art
 ```
 
 ---
@@ -230,7 +231,7 @@ package/
 2. **سطّب الودجت بطريقة من دول:**
    - **من متجر KDE:** كليك يمين على سطح المكتب ← **إضافة عناصر واجهة** ← **احصل على عناصر جديدة** ← دوّر على **Aurora Radio**.
    - **من ملف:** نزّل ملف `.plasmoid` من [Releases](https://github.com/elblasy33/plasma_radio_deploy/releases) وشغّل:
-     `kpackagetool6 -t Plasma/Applet -i aurora-radio-1.1.0.plasmoid`
+     `kpackagetool6 -t Plasma/Applet -i aurora-radio-1.1.1.plasmoid`
    - **من المصدر:**
      `git clone https://github.com/elblasy33/plasma_radio_deploy.git && cd plasma_radio_deploy && ./install.sh --restart`
 3. **ضيفه:** من **إضافة عناصر واجهة**، دوّر على **راديو أورورا** واسحبه للوحة أو لسطح المكتب.
