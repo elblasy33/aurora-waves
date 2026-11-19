@@ -338,7 +338,7 @@ Item {
                     Layout.fillWidth: true
                     Layout.topMargin: Kirigami.Units.largeSpacing
                     Kirigami.Icon { source: "folder-music"; Layout.preferredWidth: Kirigami.Units.iconSizes.small; Layout.preferredHeight: width; opacity: 0.7 }
-                    QQC2.Label { text: app.t("مكتبة ماسبيرو — اضغط للإضافة"); font.weight: Font.DemiBold; opacity: 0.7 }
+                    QQC2.Label { text: app.t("الإذاعات المصرية الرسمية (ماسبيرو) — اضغط للإضافة"); font.weight: Font.DemiBold; opacity: 0.7 }
                 }
 
                 Flow {
@@ -412,8 +412,8 @@ Item {
         modal: true
         title: app.t("استعادة الافتراضي؟")
         standardButtons: QQC2.Dialog.Yes | QQC2.Dialog.No
-        QQC2.Label { text: app.t("سيتم استبدال قائمتك الحالية بالمحطتين الافتراضيتين.") }
-        onAccepted: { if (app.wantPlaying) app.stop(); app.saveStations(Presets.defaults(app.lang)) }
+        QQC2.Label { text: app.t("سيتم استبدال قائمتك الحالية بالمحطات الافتراضية لبلدك.") }
+        onAccepted: { if (app.wantPlaying) app.stop(); app.saveStations(Presets.defaults(app.lang, app.systemCountry)) }
     }
 
     // ================= edit / add form =================

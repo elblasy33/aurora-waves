@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Egypt Radio playback daemon.
+"""Aurora Radio playback daemon.
 
 Owns one mpv process, keeps playback state (with auto-retry for expiring stream
 links), and exposes it on D-Bus as an MPRIS2 player so that media controllers,
@@ -21,12 +21,12 @@ gi.require_version("Gio", "2.0")
 from gi.repository import Gio, GLib  # noqa: E402
 
 RUN = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
-CTL_SOCK = os.path.join(RUN, "egypt-radio.sock")
-MPV_SOCK = os.path.join(RUN, "egypt-radiod-mpv.sock")
-BUS_NAME = "org.mpris.MediaPlayer2.egyptradio"
+CTL_SOCK = os.path.join(RUN, "aurora-radio.sock")
+MPV_SOCK = os.path.join(RUN, "aurora-radiod-mpv.sock")
+BUS_NAME = "org.mpris.MediaPlayer2.auroraradio"
 OBJ_PATH = "/org/mpris/MediaPlayer2"
 IDLE_EXIT_SECS = 180          # daemon leaves after being stopped this long
-APP_NAME = "إذاعات مصر"
+APP_NAME = "Aurora Radio"
 
 MPRIS_XML = """
 <node>
@@ -122,7 +122,7 @@ class Mpv:
             ["mpv", "--idle=yes", "--no-video", "--no-terminal", "--force-window=no",
              "--input-ipc-server=" + MPV_SOCK, "--volume=" + str(volume),
              "--ytdl-format=bestaudio/best", "--cache=yes", "--cache-secs=15",
-             "--network-timeout=20", "--audio-client-name=egypt-radio",
+             "--network-timeout=20", "--audio-client-name=aurora-radio",
              "--title=" + APP_NAME, "--load-scripts=no"],
             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         GLib.timeout_add(80, self._try_connect, time.time())
@@ -422,7 +422,7 @@ class Daemon:
         title, artist, album = self.titles()
         st = self.current or {}
         md = {
-            "mpris:trackid": GLib.Variant("o", "/org/egyptradio/track/%d" % self.track_no),
+            "mpris:trackid": GLib.Variant("o", "/org/auroraradio/track/%d" % self.track_no),
             "xesam:title": GLib.Variant("s", title),
             "xesam:artist": GLib.Variant("as", [artist]),
             "xesam:album": GLib.Variant("s", album),

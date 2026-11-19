@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Install or update the "Egypt Radio" plasmoid for the current user.
+# Install or update the "Aurora Radio" plasmoid for the current user.
 #   ./install.sh            install / update
 #   ./install.sh --restart  ... and reload plasmashell so the new version shows immediately
 set -e
 cd "$(dirname "$0")"
-if kpackagetool6 -t Plasma/Applet -l 2>/dev/null | grep -q '^org.beso.egyptradio$'; then
+if kpackagetool6 -t Plasma/Applet -l 2>/dev/null | grep -q '^com.github.elblasy33.auroraradio$'; then
     kpackagetool6 -t Plasma/Applet -u package
 else
     kpackagetool6 -t Plasma/Applet -i package

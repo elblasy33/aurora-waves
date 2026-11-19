@@ -17,7 +17,7 @@ Item {
     property bool exhausted: false
     property string error: ""
     property string query: ""
-    property string country: app.lang === "ar" ? "EG" : ""
+    property string country: app.systemCountry
     property string tag: ""
     property int seq: 0
     property bool started: false
@@ -26,8 +26,8 @@ Item {
     readonly property color fg: Kirigami.Theme.textColor
     readonly property int pageSize: 50
 
-    readonly property var countries: [
-        { code: "",   name: app.t("🌍  كل الدول") },
+    // Arab countries keep localized names; the rest of the world comes from the directory
+    readonly property var arabCountries: [
         { code: "EG", name: app.t("🇪🇬  مصر") },        { code: "SA", name: app.t("🇸🇦  السعودية") },
         { code: "AE", name: app.t("🇦🇪  الإمارات") },    { code: "KW", name: app.t("🇰🇼  الكويت") },
         { code: "QA", name: app.t("🇶🇦  قطر") },         { code: "BH", name: app.t("🇧🇭  البحرين") },
@@ -36,18 +36,47 @@ Item {
         { code: "PS", name: app.t("🇵🇸  فلسطين") },      { code: "IQ", name: app.t("🇮🇶  العراق") },
         { code: "YE", name: app.t("🇾🇪  اليمن") },       { code: "SD", name: app.t("🇸🇩  السودان") },
         { code: "LY", name: app.t("🇱🇾  ليبيا") },       { code: "TN", name: app.t("🇹🇳  تونس") },
-        { code: "DZ", name: app.t("🇩🇿  الجزائر") },     { code: "MA", name: app.t("🇲🇦  المغرب") },
-        { code: "TR", name: app.t("🇹🇷  تركيا") },       { code: "GB", name: app.t("🇬🇧  بريطانيا") },
-        { code: "FR", name: app.t("🇫🇷  فرنسا") },       { code: "DE", name: app.t("🇩🇪  ألمانيا") },
-        { code: "US", name: app.t("🇺🇸  أمريكا") }
+        { code: "DZ", name: app.t("🇩🇿  الجزائر") },     { code: "MA", name: app.t("🇲🇦  المغرب") }
     ]
+    readonly property var fallbackWorld: [
+        { code: "US", name: app.t("🇺🇸  أمريكا") },      { code: "GB", name: app.t("🇬🇧  بريطانيا") },
+        { code: "FR", name: app.t("🇫🇷  فرنسا") },       { code: "DE", name: app.t("🇩🇪  ألمانيا") },
+        { code: "TR", name: app.t("🇹🇷  تركيا") }
+    ]
+    property var worldCountries: []          // [{code, name, count}] from sources.py countries
+    readonly property string homeCountry: app.systemCountry
+
+    // All · your country · Arab countries (Arabic UI) · the rest of the world by station count
+    readonly property var countries: {
+        var out = [{ code: "", name: app.t("🌍  كل الدول") }]
+        var used = {}
+        function push(c) { if (c.code && !used[c.code]) { used[c.code] = true; out.push(c) } }
+        function named(code) {
+            for (var i = 0; i < arabCountries.length; i++) if (arabCountries[i].code === code) return arabCountries[i]
+            for (var j = 0; j < fallbackWorld.length; j++) if (fallbackWorld[j].code === code) return fallbackWorld[j]
+            for (var k = 0; k < worldCountries.length; k++)
+                if (worldCountries[k].code === code) return { code: code, name: flag(code) + "  " + worldCountries[k].name }
+            return { code: code, name: flag(code) + "  " + code }
+        }
+        if (homeCountry !== "") push(named(homeCountry))
+        if (app.lang === "ar") arabCountries.forEach(push)
+        if (worldCountries.length > 0) {
+            worldCountries.forEach(function (c) { push(named(c.code)) })
+        } else {
+            arabCountries.forEach(push)
+            fallbackWorld.forEach(push)
+        }
+        return out
+    }
     readonly property var tags: [
-        { t: "",          n: app.t("الكل") },     { t: "quran",   n: app.t("قرآن") },
-        { t: "news",      n: app.t("أخبار") },    { t: "arabic",  n: app.t("عربي") },
-        { t: "tarab",     n: app.t("طرب") },      { t: "islamic", n: app.t("إسلامي") },
-        { t: "sport",     n: app.t("رياضة") },    { t: "pop",     n: app.t("بوب") },
-        { t: "classical", n: app.t("كلاسيك") },   { t: "jazz",    n: app.t("جاز") },
-        { t: "talk",      n: app.t("حوارات") }
+        { t: "",           n: app.t("الكل") },      { t: "news",       n: app.t("أخبار") },
+        { t: "pop",        n: app.t("بوب") },       { t: "hits",       n: app.t("الأكثر شهرة") },
+        { t: "rock",       n: app.t("روك") },       { t: "jazz",       n: app.t("جاز") },
+        { t: "classical",  n: app.t("كلاسيك") },    { t: "chillout",   n: app.t("استرخاء") },
+        { t: "electronic", n: app.t("إلكتروني") },  { t: "talk",       n: app.t("حوارات") },
+        { t: "sport",      n: app.t("رياضة") },     { t: "arabic",     n: app.t("عربي") },
+        { t: "tarab",      n: app.t("طرب") },       { t: "quran",      n: app.t("قرآن") },
+        { t: "islamic",    n: app.t("إسلامي") }
     ]
 
     function flag(cc) {
@@ -129,7 +158,12 @@ Item {
         else done({})
     }
 
-    onVisibleChanged: if (visible && !started) { started = true; search(false) }
+    onVisibleChanged: {
+        if (!visible || started) return
+        started = true
+        search(false)
+        app.runSources("countries", "-", function (r) { if (Array.isArray(r)) disc.worldCountries = r })
+    }
 
     Timer { id: debounce; interval: 650; onTriggered: disc.search(false) }
 
@@ -173,6 +207,7 @@ Item {
                 textRole: "name"
                 valueRole: "code"
                 Component.onCompleted: currentIndex = indexOfValue(disc.country)
+                onModelChanged: currentIndex = indexOfValue(disc.country)
                 onActivated: { disc.country = currentValue; disc.search(false) }
             }
         }

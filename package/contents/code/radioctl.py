@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Client for radiod.py, used by the Egypt Radio plasmoid.
+"""Client for radiod.py, used by the Aurora Radio plasmoid.
 
 Usage:
   radioctl.py '<json request>'      e.g. '{"cmd":"status"}'  -> prints JSON reply
@@ -16,8 +16,8 @@ from urllib.parse import unquote
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 RUN = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
-CTL_SOCK = os.path.join(RUN, "egypt-radio.sock")
-CACHE = os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache"), "egypt-radio")
+CTL_SOCK = os.path.join(RUN, "aurora-radio.sock")
+CACHE = os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache"), "aurora-radio")
 
 STARTS_DAEMON = ("play", "toggle", "next", "prev", "sync")
 

@@ -83,7 +83,7 @@ Item {
             Layout.columnSpan: full.wide ? 2 : 1
             visible: !full.mini
             Kirigami.Icon { source: Plasmoid.icon; Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium; Layout.preferredHeight: width }
-            Kirigami.Heading { text: app.t("إذاعات مصر"); level: 3; font.weight: Font.DemiBold }
+            Kirigami.Heading { text: app.t("راديو أورورا"); level: 3; font.weight: Font.DemiBold }
             QQC2.Label {
                 text: app.stations.length + app.t(" محطة")
                 visible: !full.narrow
@@ -367,18 +367,56 @@ Item {
             id: stationsCol
             Layout.fillWidth: true
             Layout.fillHeight: true
-            visible: !full.mini
+            visible: !full.mini || app.stations.length === 0
             spacing: Kirigami.Units.largeSpacing
 
-            // ---- empty state ----
+            // ---- welcome / empty state ----
             ColumnLayout {
                 visible: app.stations.length === 0
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                spacing: Kirigami.Units.largeSpacing
                 Item { Layout.fillHeight: true }
-                Kirigami.Icon { source: "radio"; Layout.alignment: Qt.AlignHCenter; Layout.preferredWidth: 64; Layout.preferredHeight: 64; opacity: 0.5 }
-                QQC2.Label { text: app.t("لا توجد محطات بعد"); Layout.alignment: Qt.AlignHCenter; opacity: 0.7 }
-                GlassButton { text: app.t("إضافة محطة"); iconName: "list-add"; filled: true; Layout.alignment: Qt.AlignHCenter; onClicked: app.editing = true }
+                StationLogo {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: Kirigami.Units.gridUnit * 4.5
+                    Layout.preferredHeight: Layout.preferredWidth
+                    logo: "icon:" + Plasmoid.icon
+                    tint: Kirigami.Theme.highlightColor
+                }
+                Kirigami.Heading {
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WordWrap
+                    level: 2
+                    text: app.t("أهلًا بك في راديو أورورا")
+                }
+                QQC2.Label {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: Kirigami.Units.gridUnit
+                    Layout.rightMargin: Kirigami.Units.gridUnit
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WordWrap
+                    opacity: 0.75
+                    text: app.t("اكتشف إذاعات بلدك والعالم، أو أضف رابطًا أو ملفاتك الموسيقية.")
+                }
+                Flow {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.maximumWidth: parent.width
+                    spacing: Kirigami.Units.largeSpacing
+                    GlassButton {
+                        text: app.t("اكتشف المحطات")
+                        iconName: "edit-find"
+                        filled: true
+                        accent: Kirigami.Theme.highlightColor
+                        onClicked: { app.editing = true; editorPage.discovering = true }
+                    }
+                    GlassButton {
+                        text: app.t("إضافة محطة")
+                        iconName: "list-add"
+                        onClicked: { app.editing = true; editorPage.openForm(-2) }
+                    }
+                }
                 Item { Layout.fillHeight: true }
             }
 

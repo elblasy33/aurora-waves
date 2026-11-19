@@ -16,6 +16,11 @@ PlasmoidItem {
     readonly property string lang: I18n.resolve(cfg.language, Qt.locale().name)
     readonly property bool rtl: lang === "ar"
     function t(s) { return I18n.tr(lang, s) }
+    // ISO country of the desktop locale ("ar_EG" -> "EG"); drives defaults and Discover
+    readonly property string systemCountry: {
+        var p = Qt.locale().name.split("_")
+        return p.length > 1 && /^[A-Za-z]{2}$/.test(p[1]) ? p[1].toUpperCase() : ""
+    }
 
     // ---------- data ----------
     property var stations: []
@@ -59,7 +64,7 @@ PlasmoidItem {
     Plasmoid.icon: cfg.customIcon || "radio"
     Plasmoid.backgroundHints: PlasmaCore.Types.DefaultBackground | PlasmaCore.Types.ConfigurableBackground
     Plasmoid.status: wantPlaying ? PlasmaCore.Types.ActiveStatus : PlasmaCore.Types.PassiveStatus
-    toolTipMainText: previewing ? previewName : (current ? current.name : t("إذاعات مصر"))
+    toolTipMainText: previewing ? previewName : (current ? current.name : t("راديو أورورا"))
     toolTipSubText: statusText() + "  ·  🔊 " + volume + "%"
     hideOnWindowDeactivate: !editing   // keep popup open while a file dialog is up
     switchWidth: Kirigami.Units.gridUnit * 13
@@ -142,7 +147,7 @@ PlasmoidItem {
             try { list = JSON.parse(raw) } catch (e) { list = null }
         }
         if (!Array.isArray(list)) {
-            list = Presets.defaults(lang)
+            list = Presets.defaults(lang, systemCountry)
             cfg.stations = JSON.stringify(list)
         }
         stations = list
@@ -225,7 +230,7 @@ PlasmoidItem {
 
     function send(req) {
         req.mpris = cfg.mprisEnabled
-        req.appName = t("إذاعات مصر")
+        req.appName = t("راديو أورورا")
         req.liveText = t("بث مباشر")
         run(shq(JSON.stringify(req)), function (out) {
             try { root.handleStatus(JSON.parse(out)) } catch (e) { }

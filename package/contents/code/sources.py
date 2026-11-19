@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Station discovery and logo helpers for the Egypt Radio plasmoid.
+"""Station discovery and logo helpers for the Aurora Radio plasmoid.
 
   sources.py search '<json>'   {"q","country","tag","limit","offset"} -> [station...]
   sources.py probe <url>       -> {"name","subtitle","logo","homepage"}  (logo = local file:// or "")
@@ -19,9 +19,9 @@ import sys
 import urllib.parse
 import urllib.request
 
-UA = "EgyptRadioPlasmoid/1.0"
+UA = "AuroraRadioPlasmoid/1.0"
 API = "https://all.api.radio-browser.info/json"
-DATA = os.path.join(os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share"), "egypt-radio")
+DATA = os.path.join(os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share"), "aurora-radio")
 LOGOS = os.path.join(DATA, "logos")
 MAX_IMG = 5 * 1024 * 1024
 TIMEOUT = 12
@@ -177,6 +177,18 @@ def search(params):
             merged.append(c)
     merged.sort(key=lambda c: (c["countrycode"] != country if country else False, -c["votes"]))
     return merged[offset:offset + limit]
+
+
+def countries():
+    """Every country that has stations: [{code, name, count}], most stations first."""
+    seen = {}
+    for c in api("/countries", {"hidebroken": "true"}):
+        code = (c.get("iso_3166_1") or "").upper()
+        if len(code) != 2 or not c.get("stationcount"):
+            continue
+        if code not in seen or c["stationcount"] > seen[code]["count"]:
+            seen[code] = {"code": code, "name": c.get("name") or code, "count": c["stationcount"]}
+    return sorted(seen.values(), key=lambda c: -c["count"])
 
 
 def _safe_api(params):
@@ -586,6 +598,8 @@ def main(argv):
             out(probe(arg))
         elif cmd == "logo":
             out({"logo": fetch_logo(arg) or ""})
+        elif cmd == "countries":
+            out(countries())
         elif cmd == "check":
             out(check(json.loads(arg)))
         elif cmd == "sitelogo":

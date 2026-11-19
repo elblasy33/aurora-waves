@@ -1,6 +1,7 @@
 .pragma library
 
-// Official Maspero (National Media Authority) live streams, via their public Dailymotion pages.
+// Curated library: Egypt's official public radio (Maspero / National Media Authority),
+// via their public Dailymotion live pages.
 // logo: "pkg:<file>" points to contents/images/logos/<file>; empty = generated glass logo.
 var catalog = [
     { name: "صوت العرب", en: "Sawt El Arab",             url: "https://www.dailymotion.com/video/x8n6dqq", logo: "pkg:x8n6dqq.jpg", glyph: "ص",  color: "#1e88e5" },
@@ -51,6 +52,9 @@ function make(p, lang) {
     return { id: newId(), name: nameFor(p, lang), url: p.url, logo: p.logo || "", glyph: p.glyph || "", color: p.color || palette[0] };
 }
 
-function defaults(lang) {
-    return [make(catalog[0], lang), make(catalog[1], lang)];
+// First-run stations. Egypt gets the official Maspero stations; everyone else starts empty and is
+// sent to Discover with their own country preselected.
+function defaults(lang, country) {
+    if (country === "EG") return [make(catalog[0], lang), make(catalog[1], lang)];
+    return [];
 }

@@ -2,18 +2,18 @@
     "KPackageStructure": "Plasma/Applet",
     "X-Plasma-API-Minimum-Version": "6.0",
     "KPlugin": {
-        "Id": "org.beso.egyptradio",
-        "Name": "Egypt Radio",
-        "Name[ar]": "إذاعات مصر",
-        "Description": "Live radio with a glass interface — Egyptian & world stations, your music, MPRIS",
-        "Description[ar]": "إذاعات بث مباشر بواجهة زجاجية — المحطات المصرية والعالمية وملفاتك، مع دعم MPRIS",
+        "Id": "com.github.elblasy33.auroraradio",
+        "Name": "Aurora Radio",
+        "Name[ar]": "راديو أورورا",
+        "Description": "Live radio from around the world in a glass interface — discover stations, play your music, MPRIS",
+        "Description[ar]": "إذاعات العالم بث مباشر بواجهة زجاجية — اكتشف المحطات وشغّل موسيقاك، مع دعم MPRIS",
         "Icon": "radio",
         "Category": "Multimedia",
         "License": "GPL-2.0-or-later",
         "Version": "1.0.0",
         "Authors": [
             {
-                "Name": "beso"
+                "Name": "elblasy33"
             }
         ],
         "Website": "https://github.com/elblasy33/plasma_radio_deploy",
