@@ -1,8 +1,9 @@
 # Changelog
 
-## 1.0.0 — 2026-11-19
+## 1.1.0 — 2026-11-19
 
-First public release.
+**Egypt Radio is now Aurora Radio** and serves listeners everywhere.
+New plugin id `com.github.elblasy33.auroraradio`, so remove the old widget and add Aurora Radio.
 
 - **Discover**: search the Radio Browser directory (220+ countries) by name, country and
   genre, with your country preselected and Arabic/Latin name matching
@@ -16,3 +17,8 @@ First public release.
 - Responsive layouts: wide, normal, short, tiny and narrow
 - English and Arabic interface with automatic text direction
 - Settings for glass opacity, background, logo shape, layout, panel icon, language and more
+
+## 1.0.0 — 2026-11-19
+
+First version, published as *Egypt Radio* (`org.beso.egyptradio`): the Maspero stations, the glass
+interface, Discover, Check & repair, MPRIS and the Arabic/English UI.

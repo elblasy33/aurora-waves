@@ -5,7 +5,7 @@ Plasma's **Get New Widgets** dialog downloads from [store.kde.org](https://store
 ## Steps
 
 1. Build the package with `./build.sh`. It writes `dist/aurora-radio-<version>.plasmoid`.
-2. Create a GitHub release for the version (for example tag `v1.0.0`) and attach the
+2. Create a GitHub release for the version (for example tag `v1.1.0`) and attach the
    `.plasmoid` file.
 3. Sign in at <https://store.kde.org>, then go to **Add Product**:
    - **Category:** *Plasma 6 Extensions → Plasma 6 Applets* (Widgets)
