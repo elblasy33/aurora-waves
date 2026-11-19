@@ -5,12 +5,18 @@
         "Id": "org.beso.egyptradio",
         "Name": "Egypt Radio",
         "Name[ar]": "إذاعات مصر",
-        "Description": "Live Egyptian radio stations with a glass interface",
-        "Description[ar]": "الإذاعات المصرية بث مباشر بواجهة زجاجية",
+        "Description": "Live radio with a glass interface — Egyptian & world stations, your music, MPRIS",
+        "Description[ar]": "إذاعات بث مباشر بواجهة زجاجية — المحطات المصرية والعالمية وملفاتك، مع دعم MPRIS",
         "Icon": "radio",
         "Category": "Multimedia",
         "License": "GPL-2.0-or-later",
-        "Version": "1.0",
-        "Authors": [{ "Name": "beso" }]
+        "Version": "1.0.0",
+        "Authors": [
+            {
+                "Name": "beso"
+            }
+        ],
+        "Website": "https://github.com/elblasy33/plasma_radio_deploy",
+        "BugReportUrl": "https://github.com/elblasy33/plasma_radio_deploy/issues"
     }
 }
