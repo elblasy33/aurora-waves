@@ -5,6 +5,11 @@ Discover tens of thousands of stations, add any stream link, and play your own m
 and playlists. It works with Plasma's media controller, with audio visualizers and with your media
 keys.
 
+<p><a href="https://store.kde.org/p/2382242"><img alt="Get it on the KDE Store" src="https://img.shields.io/badge/KDE%20Store-Aurora%20Radio-1d99f3?logo=kde&logoColor=white"></a>
+<a href="https://github.com/elblasy33/plasma_radio_deploy/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/elblasy33/plasma_radio_deploy?label=release"></a>
+<img alt="Plasma 6" src="https://img.shields.io/badge/Plasma-6-54a3d8">
+<img alt="License" src="https://img.shields.io/badge/license-GPL--2.0--or--later-blue"></p>
+
 [العربية ⬇](#بالعربي) · [Install](#install) · [User guide](#user-guide) · [Troubleshooting](#troubleshooting) · [For developers](#for-developers)
 
 <p align="center">
@@ -61,7 +66,7 @@ sudo pacman -S mpv yt-dlp ffmpeg python-gobject imagemagick
 
 ### 2. Install the widget (choose one)
 
-**A. From Plasma (KDE Store):**
+**A. From Plasma ([KDE Store](https://store.kde.org/p/2382242)):**
 right-click the desktop or a panel → **Add Widgets…** → **Get New Widgets…** → **Download New Plasma
 Widgets** → search for **Aurora Radio** → **Install**.
 
@@ -229,7 +234,7 @@ package/
 1. **سطّب المتطلبات:**
    `sudo apt install mpv yt-dlp ffmpeg python3-gi imagemagick`
 2. **سطّب الودجت بطريقة من دول:**
-   - **من متجر KDE:** كليك يمين على سطح المكتب ← **إضافة عناصر واجهة** ← **احصل على عناصر جديدة** ← دوّر على **Aurora Radio**.
+   - **من [متجر KDE](https://store.kde.org/p/2382242):** كليك يمين على سطح المكتب ← **إضافة عناصر واجهة** ← **احصل على عناصر جديدة** ← دوّر على **Aurora Radio**.
    - **من ملف:** نزّل ملف `.plasmoid` من [Releases](https://github.com/elblasy33/plasma_radio_deploy/releases) وشغّل:
      `kpackagetool6 -t Plasma/Applet -i aurora-radio-1.1.1.plasmoid`
    - **من المصدر:**

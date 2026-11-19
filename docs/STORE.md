@@ -2,6 +2,10 @@
 
 Plasma's **Get New Widgets** dialog downloads from [store.kde.org](https://store.kde.org).
 
+**Store page:** <https://store.kde.org/p/2382242> (category *Plasma 6 Applets*, id 706).
+New products show on the website at once. Plasma's *Get New Widgets* reads a separate API
+that catches up a few hours later.
+
 ## Steps
 
 1. Build the package with `./build.sh`. It writes `dist/aurora-radio-<version>.plasmoid`.
