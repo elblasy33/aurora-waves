@@ -1,0 +1,16 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "KPlugin": {
+        "Id": "org.beso.egyptradio",
+        "Name": "Egypt Radio",
+        "Name[ar]": "إذاعات مصر",
+        "Description": "Live Egyptian radio stations with a glass interface",
+        "Description[ar]": "الإذاعات المصرية بث مباشر بواجهة زجاجية",
+        "Icon": "radio",
+        "Category": "Multimedia",
+        "License": "GPL-2.0-or-later",
+        "Version": "1.0",
+        "Authors": [{ "Name": "beso" }]
+    }
+}
