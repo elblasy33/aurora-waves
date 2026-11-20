@@ -50,13 +50,21 @@ Item {
     function loadHome() {
         if (!ready || homeLoading) return
         homeLoading = true
-        app.runYt("home", JSON.stringify({ lang: app.lang, country: app.systemCountry }), function (r) {
-            ytp.homeLoading = false
-            if (r && r.shelves) ytp.home = r.shelves
+        var fetchHome = function () {
+            app.runYt("home", JSON.stringify({ lang: app.lang, country: app.systemCountry }), function (r) {
+                ytp.homeLoading = false
+                if (r && r.shelves) ytp.home = r.shelves
+            })
+        }
+        if (!signedIn) { lib = null; fetchHome(); return }
+        // the library first: it renews a stale browser session, so the home feed is personal too
+        app.runYt("library", "-", function (r) {
+            ytp.lib = r && (r.liked || r.error) ? r : { error: "failed" }
+            fetchHome()
         })
-        if (signedIn) app.runYt("library", "-", function (r) { if (r && !r.error) ytp.lib = r })
-        else lib = null
     }
+    readonly property bool libReady: lib !== null && !lib.error
+    readonly property bool libExpired: lib !== null && !!lib.error
 
     function loginWith(params) {
         loginBusy = params.browser || "headers"
@@ -616,34 +624,84 @@ Item {
                         spacing: Kirigami.Units.smallSpacing
 
                         // before typing: your library (signed in) and the home feed
+                        GlassPanel {
+                            Layout.fillWidth: true
+                            visible: ytp.query.trim() === "" && ytp.signedIn && ytp.libExpired
+                            implicitHeight: expRow.implicitHeight + ytp.gu
+                            radius: 16
+                            highlighted: true
+                            accent: Kirigami.Theme.neutralTextColor
+                            RowLayout {
+                                id: expRow
+                                anchors.fill: parent
+                                anchors.margins: ytp.gu * 0.5
+                                spacing: Kirigami.Units.largeSpacing
+                                Kirigami.Icon { source: "dialog-warning"; implicitWidth: ytp.gu * 1.6; implicitHeight: implicitWidth }
+                                QQC2.Label {
+                                    Layout.fillWidth: true
+                                    wrapMode: Text.WordWrap
+                                    font: Kirigami.Theme.smallFont
+                                    text: ytp.account.method === "browser"
+                                          ? app.t("انتهت جلسة تسجيل الدخول. تأكد أنك ما زلت مسجّلًا في يوتيوب ميوزك داخل المتصفح، ثم أعد الاتصال.")
+                                          : app.t("انتهت جلسة تسجيل الدخول. سجّل الدخول من جديد.")
+                                }
+                                GlassButton {
+                                    text: ytp.loginBusy !== "" ? app.t("جاري التحقق…") : app.t("إعادة الاتصال")
+                                    enabled: ytp.loginBusy === ""
+                                    onClicked: ytp.account.method === "browser" ? ytp.loginWith({ browser: ytp.account.browser })
+                                                                               : ytp.showAccount()
+                                }
+                            }
+                        }
                         SectionTitle {
-                            visible: ytp.query.trim() === "" && ytp.signedIn && ytp.lib !== null
+                            visible: ytp.query.trim() === "" && ytp.libReady
                             text: app.t("مكتبتي")
                         }
                         Flow {
                             Layout.fillWidth: true
-                            visible: ytp.query.trim() === "" && ytp.signedIn && ytp.lib !== null
+                            visible: ytp.query.trim() === "" && ytp.libReady
                             spacing: Kirigami.Units.smallSpacing
                             GlassButton {
-                                text: app.t("أغانٍ أعجبتني")
+                                text: app.t("أغانٍ أعجبتني") + (ytp.libReady && ytp.lib.liked.length ? "  " + ytp.lib.liked.length : "")
                                 iconName: "emblem-favorite"
-                                enabled: ytp.lib && ytp.lib.liked.length > 0
-                                onClicked: ytp.open("playlist", "LM", { title: app.t("أغانٍ أعجبتني"), thumb: "" })
+                                enabled: ytp.libReady && ytp.lib.liked.length > 0
+                                onClicked: ytp.open("playlist", "LM", { title: app.t("أغانٍ أعجبتني"), thumb: ytp.lib.liked[0].thumb })
                             }
                             GlassButton {
                                 text: app.t("السجل")
                                 iconName: "view-history"
-                                enabled: ytp.lib && ytp.lib.history.length > 0
+                                enabled: ytp.libReady && ytp.lib.history.length > 0
                                 onClicked: ytp.showList(app.t("السجل"), ytp.lib.history)
                             }
+                            GlassButton {
+                                text: app.t("تشغيل عشوائي لما أحب")
+                                iconName: "media-playlist-shuffle"
+                                enabled: ytp.libReady && ytp.lib.liked.length > 1
+                                onClicked: app.playYt(app.shuffled(ytp.lib.liked), 0, app.t("أغانٍ أعجبتني"))
+                            }
                         }
-                        Shelf {
-                            visible: ytp.query.trim() === "" && ytp.signedIn && ytp.lib !== null && ytp.lib.playlists.length > 0
-                            model: ytp.lib ? ytp.lib.playlists : []
-                            delegate: Card {
+                        Repeater {
+                            // your playlists, saved albums and followed artists
+                            model: ytp.query.trim() === "" && ytp.libReady ? [
+                                { title: app.t("قوائمك"),  items: ytp.lib.playlists || [] },
+                                { title: app.t("ألبوماتك"), items: ytp.lib.albums || [] },
+                                { title: app.t("فنانون تتابعهم"), items: ytp.lib.artists || [] }
+                            ].filter(function (x) { return x.items.length > 0 }) : []
+                            delegate: ColumnLayout {
+                                id: libShelf
                                 required property var modelData
-                                item: modelData
-                                onPicked: ytp.pick(modelData)
+                                Layout.fillWidth: true
+                                spacing: Kirigami.Units.smallSpacing
+                                SectionTitle { text: libShelf.modelData.title }
+                                Shelf {
+                                    model: libShelf.modelData.items
+                                    delegate: Card {
+                                        required property var modelData
+                                        item: modelData
+                                        round: modelData.kind === "artist"
+                                        onPicked: ytp.pick(modelData)
+                                    }
+                                }
                             }
                         }
                         // sign-in hint (optional)

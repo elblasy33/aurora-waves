@@ -289,5 +289,12 @@ var EN = {
     "لم نجد متصفحًا مدعومًا. استخدم الطريقة اليدوية بالأسفل.": "No supported browser was found. Use the manual method below.",
     "طريقة يدوية (لصق ترويسات الطلب)": "Manual method (paste request headers)",
     "في المتصفح: افتح music.youtube.com وأنت مسجّل، اضغط F12 ← Network، اختر أي طلب باسم browse، ثم انسخ Request Headers والصقها هنا.": "In the browser: open music.youtube.com while signed in, press F12 → Network, pick any request named browse, then copy its Request Headers and paste them here.",
-    "جاري التحقق…": "Checking…"
+    "جاري التحقق…": "Checking…",
+    "انتهت جلسة تسجيل الدخول. تأكد أنك ما زلت مسجّلًا في يوتيوب ميوزك داخل المتصفح، ثم أعد الاتصال.": "Your sign-in session expired. Make sure you are still signed in to YouTube Music in the browser, then reconnect.",
+    "انتهت جلسة تسجيل الدخول. سجّل الدخول من جديد.": "Your sign-in session expired. Please sign in again.",
+    "إعادة الاتصال": "Reconnect",
+    "تشغيل عشوائي لما أحب": "Shuffle my likes",
+    "قوائمك": "Your playlists",
+    "ألبوماتك": "Your albums",
+    "فنانون تتابعهم": "Artists you follow"
 }

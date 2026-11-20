@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.1.0 — 2026-11-20
+
+- **Your YouTube Music library**: liked songs (with count), history, *Shuffle my likes*, your
+  playlists, saved albums and the artists you follow
+- Fixed: a browser sign-in stopped working after a few minutes. Chrome rotates its Google session
+  cookies and Google rejects old copies; the widget now renews the session from the browser every
+  10 minutes and whenever YouTube answers as signed out
+- When the session cannot be renewed, a clear notice with **Reconnect** replaces the silently empty
+  library
+
 ## 2.0.1 — 2026-11-20
 
 - New screenshots with YouTube Music (English and Arabic)

@@ -188,17 +188,36 @@ def headers_from_browser(browser):
     }
 
 
-def refresh_browser_login():
-    """Browser sessions rotate their cookies; re-read them at most every 12 hours."""
+REFRESH_SECS = 10 * 60
+
+
+def refresh_browser_login(force=False):
+    """Re-read the session from the browser.
+
+    Chrome rotates its Google session cookies every few minutes and Google then rejects the old
+    ones, so a copy goes stale quickly: refresh when it is older than REFRESH_SECS, or on demand
+    after YouTube treated a request as signed out. Returns True when fresh headers were written.
+    """
     acc = read_json(ACCOUNT) or {}
     if acc.get("method") != "browser":
-        return
+        return False
     try:
-        if time.time() - os.path.getmtime(AUTH) < 12 * 3600:
-            return
+        if not force and time.time() - os.path.getmtime(AUTH) < REFRESH_SECS:
+            return False
         write_private(AUTH, headers_from_browser(acc["browser"]))
+        _YT.clear()
+        return True
     except Exception:
-        pass                       # keep the old headers; they may still work
+        return False               # keep the old headers; they may still work
+
+
+def signed_in_ok(y):
+    """Does YouTube accept this client's session? (a signed-out reply has no account header)"""
+    try:
+        info = y.get_account_info()
+        return bool(info and info.get("accountName"))
+    except Exception:
+        return False
 
 
 def account_info():
@@ -425,6 +444,10 @@ def playlist(pid):
 
 def library():
     y = yt()
+    if not signed_in_ok(y):
+        # stale browser cookies: read them again and retry once before giving up
+        if not (refresh_browser_login(force=True) and signed_in_ok(y := yt())):
+            return {"error": "session-expired"}
     from concurrent.futures import ThreadPoolExecutor
 
     def safe(fn):
@@ -433,14 +456,18 @@ def library():
         except Exception:
             return None
 
-    with ThreadPoolExecutor(max_workers=3) as ex:
+    with ThreadPoolExecutor(max_workers=5) as ex:
         liked = ex.submit(safe, lambda: y.get_liked_songs(limit=200))
         pls = ex.submit(safe, lambda: y.get_library_playlists(limit=50))
         hist = ex.submit(safe, y.get_history)
+        albums = ex.submit(safe, lambda: y.get_library_albums(limit=50))
+        artists = ex.submit(safe, lambda: y.get_library_subscriptions(limit=50))
     return {
         "liked": tracks((liked.result() or {}).get("tracks")),
         "playlists": [c for c in map(card, pls.result() or []) if c and c["id"] != "LM"],
         "history": tracks(hist.result())[:60],
+        "albums": [c for c in map(card, albums.result() or []) if c],
+        "artists": [c for c in map(card, artists.result() or []) if c],
     }
 
 
