@@ -11,9 +11,16 @@ files and playlists, and control it all from Plasma's media controller and your 
 [العربية ⬇](#بالعربي) · [Install](#install) · [User guide](#user-guide) · [Troubleshooting](#troubleshooting) · [For developers](#for-developers)
 
 <p align="center">
-  <img src="docs/screenshots/en-main.png" width="30%" alt="Player (English)">
-  <img src="docs/screenshots/en-disc.png" width="30%" alt="Discover world radio">
-  <img src="docs/screenshots/ar-main.png" width="30%" alt="Player (Arabic)">
+  <img src="docs/screenshots/waves-player-en.png" width="24%" alt="Now playing from YouTube Music">
+  <img src="docs/screenshots/waves-home-en.png" width="24%" alt="YouTube Music home feed">
+  <img src="docs/screenshots/waves-artist-en.png" width="24%" alt="Artist page">
+  <img src="docs/screenshots/waves-queue-en.png" width="24%" alt="Play queue">
+</p>
+<p align="center">
+  <img src="docs/screenshots/en-main.png" width="24%" alt="World radio player">
+  <img src="docs/screenshots/en-disc.png" width="24%" alt="Discover world radio">
+  <img src="docs/screenshots/waves-player-ar.png" width="24%" alt="Arabic interface">
+  <img src="docs/screenshots/waves-search-ar.png" width="24%" alt="Search in Arabic">
 </p>
 
 ---
@@ -229,6 +236,13 @@ package/
 ---
 
 ## بالعربي
+
+<p align="center">
+  <img src="docs/screenshots/waves-player-ar.png" width="24%" alt="تشغيل من يوتيوب ميوزك">
+  <img src="docs/screenshots/waves-home-ar.png" width="24%" alt="الصفحة الرئيسية">
+  <img src="docs/screenshots/waves-artist-ar.png" width="24%" alt="صفحة الفنان">
+  <img src="docs/screenshots/ar-main.png" width="24%" alt="الراديو">
+</p>
 
 **أمواج أورورا: إذاعات العالم ويوتيوب ميوزك وموسيقاك في مشغّل زجاجي واحد لسطح مكتب KDE Plasma 6.**
 بتسمع عشرات الآلاف من الإذاعات بث مباشر، وتدوّر على أي أغنية في يوتيوب ميوزك وتعمل لها قائمة تشغيل، وتشغّل ملفاتك وقوائمك، وكل ده بيظهر في متحكم الوسائط وأزرار الميديا.

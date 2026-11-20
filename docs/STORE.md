@@ -2,26 +2,33 @@
 
 Plasma's **Get New Widgets** dialog downloads from [store.kde.org](https://store.kde.org).
 
-**Store product:** <https://store.kde.org/p/2382242> (category *Plasma 6 Applets*, id 706), first
-published as *Aurora Radio*. Version 2.0.0 keeps the same plugin id
-(`com.github.elblasy33.auroraradio`), so **update this product and rename it** instead of creating
-a new one: existing users then get 2.0.0 as an ordinary update and keep their stations. A second
-product with the same plugin id would confuse *Get New Widgets*.
+**Aurora Waves is published as a new store product.** The old *Aurora Radio* product
+(<https://store.kde.org/p/2382242>) is not the place for it.
+
+The plugin id stays `com.github.elblasy33.auroraradio`, so whoever installs Aurora Waves over an
+old Aurora Radio keeps their stations and settings. Because both products would then install the
+same widget, once Aurora Waves is live either **delete the old product** or edit its description
+to "Moved to Aurora Waves" with a link to the new page, so nobody installs the two side by side.
 
 New products and edits show on the website at once; Plasma's *Get New Widgets* catches up a few
 hours later.
 
-## Steps for 2.0.0
+## Steps
 
-1. `./build.sh` → `dist/aurora-waves-2.0.0.plasmoid`
-2. Create the GitHub release `v2.0.0` in `elblasy33/aurora-waves` and attach the `.plasmoid`.
-3. On the store product → **Edit**:
+1. `./build.sh` → `dist/aurora-waves-<version>.plasmoid` (also attached to every
+   [GitHub release](https://github.com/elblasy33/aurora-waves/releases)).
+2. Sign in at <https://store.kde.org> → **Add Product**:
+   - **Category:** *Plasma 6 Extensions → Plasma 6 Applets* (Widgets)
    - **Title:** `Aurora Waves`
    - **Summary** and **Description:** copy them from below.
+   - **License:** GPL-2.0-or-later
    - **Link / homepage:** `https://github.com/elblasy33/aurora-waves`
-   - **Logo:** `docs/store/icon-256.png`
-   - **Files:** upload `aurora-waves-2.0.0.plasmoid` (version `2.0.0`); keep or archive the old file.
-   - **Screenshots:** a YouTube Music screenshot first, then the images in `docs/screenshots/`.
+   - **Logo:** `docs/store/icon-512.png`
+   - **Files:** the `.plasmoid`, with its version number
+   - **Screenshots** (in this order, all in `docs/screenshots/`):
+     `waves-player-en.png`, `waves-home-en.png`, `waves-artist-en.png`, `waves-search-en.png`,
+     `waves-queue-en.png`, `en-disc.png`, `waves-player-ar.png`, `sizes.png`
+3. Put the new store link in the README (badge) and in the repository homepage.
 4. Later versions: bump `Version` in `package/metadata.json`, add a `CHANGELOG.md` entry,
    run `./build.sh`, upload the new file to the same product.
 

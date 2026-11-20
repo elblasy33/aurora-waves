@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.1 — 2026-11-20
+
+- New screenshots with YouTube Music (English and Arabic)
+- Fixed: while a YouTube Music song played, the last radio station's tile still looked active
+- Mixed Arabic and Latin song, artist and album names now line up with the interface direction
+
 ## 2.0.0 — 2026-11-20
 
 **Aurora Radio is now Aurora Waves**: world radio, YouTube Music and your own music in one player.

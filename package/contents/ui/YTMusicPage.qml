@@ -286,6 +286,7 @@ Item {
                 spacing: 0
                 QQC2.Label {
                     Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignLeft      // mixed Arabic/Latin names line up
                     text: row.song.title
                     font.weight: Font.DemiBold
                     color: row.current ? app.accent : ytp.fg
@@ -293,6 +294,7 @@ Item {
                 }
                 QQC2.Label {
                     Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignLeft      // mixed Arabic/Latin names line up
                     text: [row.song.artist, row.number === "" ? row.song.album : ""]
                           .filter(function (x) { return x && x !== row.song.title }).join("  ·  ")
                     font: Kirigami.Theme.smallFont
@@ -440,6 +442,7 @@ Item {
                 Layout.fillWidth: true
                 Kirigami.Heading {
                     Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignLeft
                     text: app.t("يوتيوب ميوزك")
                     level: 3
                     font.weight: Font.DemiBold
@@ -447,6 +450,7 @@ Item {
                 }
                 QQC2.Label {
                     Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignLeft
                     text: !ytp.ready ? app.t("ابحث واستمع بنفس جمال الراديو")
                         : ytp.view === "queue" ? app.t("قائمة التشغيل")
                         : ytp.view === "account" ? app.t("الحساب")
@@ -826,6 +830,7 @@ Item {
                                 spacing: Kirigami.Units.smallSpacing
                                 Kirigami.Heading {
                                     Layout.fillWidth: true
+                                    horizontalAlignment: Text.AlignLeft
                                     text: detailCol.d.name || detailCol.d.title || ""
                                     level: 2
                                     font.weight: Font.Bold
@@ -835,6 +840,7 @@ Item {
                                 }
                                 QQC2.Label {
                                     Layout.fillWidth: true
+                                    horizontalAlignment: Text.AlignLeft
                                     text: detailCol.isArtist ? (detailCol.d.subs || "")
                                         : [detailCol.d.artist, detailCol.d.year, detailCol.d.type].filter(function (x) { return x }).join("  ·  ")
                                     visible: text !== ""
@@ -1160,6 +1166,7 @@ Item {
                         spacing: 0
                         QQC2.Label {
                             Layout.fillWidth: true
+                            horizontalAlignment: Text.AlignLeft      // mixed Arabic/Latin names line up
                             text: qrow.modelData.title
                             font.weight: qrow.current ? Font.Bold : Font.Normal
                             color: qrow.current ? app.accent : ytp.fg
@@ -1167,6 +1174,7 @@ Item {
                         }
                         QQC2.Label {
                             Layout.fillWidth: true
+                            horizontalAlignment: Text.AlignLeft      // mixed Arabic/Latin names line up
                             text: qrow.modelData.artist || ""
                             font: Kirigami.Theme.smallFont
                             opacity: 0.6

@@ -527,7 +527,7 @@ Item {
                     id: tile
                     required property var modelData
                     required property int index
-                    readonly property bool isCurrent: full.cur !== null && full.cur.id === modelData.id
+                    readonly property bool isCurrent: full.cur !== null && full.cur.id === modelData.id && !full.yt   // not while a song plays
 
                     width: grid.cellWidth
                     height: grid.cellHeight
