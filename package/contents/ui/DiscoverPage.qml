@@ -11,6 +11,7 @@ Item {
 
     property var app
     signal back()
+    signal openYt()
 
     property var results: []
     property bool loading: false
@@ -46,27 +47,48 @@ Item {
     property var worldCountries: []          // [{code, name, count}] from sources.py countries
     readonly property string homeCountry: app.systemCountry
 
-    // All · your country · Arab countries (Arabic UI) · the rest of the world by station count
+    property bool pickingCountry: false
+    property string countrySort: "alpha"      // alpha | count
+    property string countryFilter: ""
+
+    function countryName(code) {
+        if (code === "") return app.t("🌍  كل الدول")
+        for (var k = 0; k < worldCountries.length; k++)
+            if (worldCountries[k].code === code) return flag(code) + "  " + worldCountries[k].name
+        for (var i = 0; i < arabCountries.length; i++) if (arabCountries[i].code === code) return arabCountries[i].name
+        for (var j = 0; j < fallbackWorld.length; j++) if (fallbackWorld[j].code === code) return fallbackWorld[j].name
+        return flag(code) + "  " + code
+    }
+
+    // Pinned: all countries + your country; then every country, A→Z or by station count
     readonly property var countries: {
-        var out = [{ code: "", name: app.t("🌍  كل الدول") }]
-        var used = {}
-        function push(c) { if (c.code && !used[c.code]) { used[c.code] = true; out.push(c) } }
-        function named(code) {
-            for (var i = 0; i < arabCountries.length; i++) if (arabCountries[i].code === code) return arabCountries[i]
-            for (var j = 0; j < fallbackWorld.length; j++) if (fallbackWorld[j].code === code) return fallbackWorld[j]
-            for (var k = 0; k < worldCountries.length; k++)
-                if (worldCountries[k].code === code) return { code: code, name: flag(code) + "  " + worldCountries[k].name }
-            return { code: code, name: flag(code) + "  " + code }
+        var base = worldCountries.length > 0
+            ? worldCountries.map(function (c) { return { code: c.code, name: c.name, count: c.count } })
+            : arabCountries.concat(fallbackWorld).map(function (c) {
+                  return { code: c.code, name: c.name.replace(/^\S+\s+/, ""), count: 0 } })
+        var f = countryFilter.trim().toLowerCase()
+        if (f !== "")
+            base = base.filter(function (c) {
+                return c.name.toLowerCase().indexOf(f) >= 0 || c.code.toLowerCase() === f })
+        var coll = app.lang === "ar" ? "ar" : undefined
+        base.sort(countrySort === "alpha"
+                  ? function (a, b) { return a.name.localeCompare(b.name, coll) }
+                  : function (a, b) { return b.count - a.count || a.name.localeCompare(b.name, coll) })
+        var out = []
+        if (f === "") {
+            out.push({ code: "", name: app.t("كل الدول"), count: -1, pinned: true })
+            if (homeCountry !== "")
+                for (var i = 0; i < base.length; i++)
+                    if (base[i].code === homeCountry) { out.push({ code: homeCountry, name: base[i].name, count: base[i].count, pinned: true }); break }
         }
-        if (homeCountry !== "") push(named(homeCountry))
-        if (app.lang === "ar") arabCountries.forEach(push)
-        if (worldCountries.length > 0) {
-            worldCountries.forEach(function (c) { push(named(c.code)) })
-        } else {
-            arabCountries.forEach(push)
-            fallbackWorld.forEach(push)
-        }
-        return out
+        return out.concat(base.filter(function (c) { return f !== "" || c.code !== homeCountry }))
+    }
+    function pickCountry(code) {
+        pickingCountry = false
+        countryFilter = ""
+        if (code === country) return
+        country = code
+        search(false)
     }
     readonly property var tags: [
         { t: "",           n: app.t("الكل") },      { t: "news",       n: app.t("أخبار") },
@@ -162,7 +184,7 @@ Item {
         if (!visible || started) return
         started = true
         search(false)
-        app.runSources("countries", "-", function (r) { if (Array.isArray(r)) disc.worldCountries = r })
+        app.runSources("countries", app.lang || "en", function (r) { if (Array.isArray(r)) disc.worldCountries = r })
     }
 
     Timer { id: debounce; interval: 650; onTriggered: disc.search(false) }
@@ -183,9 +205,16 @@ Item {
             ColumnLayout {
                 spacing: 0
                 Kirigami.Heading { text: app.t("اكتشف إذاعات العالم"); level: 3; font.weight: Font.DemiBold }
-                QQC2.Label { text: app.t("من دليل Radio Browser المفتوح"); font: Kirigami.Theme.smallFont; opacity: 0.55 }
+                QQC2.Label { text: app.t("من دليلَي Radio Browser و zeno.fm"); font: Kirigami.Theme.smallFont; opacity: 0.55 }
             }
             Item { Layout.fillWidth: true }
+            GlassButton {
+                text: disc.width > Kirigami.Units.gridUnit * 19 ? app.t("يوتيوب ميوزك") : ""
+                iconName: "music-note-16th"
+                toolTip: app.t("ابحث في أغاني يوتيوب ميوزك")
+                implicitHeight: Kirigami.Units.gridUnit * 1.7
+                onClicked: disc.openYt()
+            }
         }
 
         // search + country (stacked when narrow)
@@ -199,21 +228,56 @@ Item {
                 onTextChanged: { disc.query = text; debounce.restart() }
                 onAccepted: { debounce.stop(); disc.search(false) }
             }
-            QQC2.ComboBox {
-                id: countryBox
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 7
+            GlassPanel {
+                id: countryBtn
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 8
                 Layout.fillWidth: parent.columns === 1
-                model: disc.countries
-                textRole: "name"
-                valueRole: "code"
-                Component.onCompleted: currentIndex = indexOfValue(disc.country)
-                onModelChanged: currentIndex = indexOfValue(disc.country)
-                onActivated: { disc.country = currentValue; disc.search(false) }
+                Layout.preferredHeight: searchField.implicitHeight
+                radius: height / 2
+                hovered: cbMouse.containsMouse
+                highlighted: disc.pickingCountry
+                accent: app.accent
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: Kirigami.Units.largeSpacing
+                    anchors.rightMargin: Kirigami.Units.largeSpacing
+                    QQC2.Label {
+                        Layout.fillWidth: true
+                        text: disc.countryName(disc.country)
+                        elide: Text.ElideRight
+                    }
+                    Kirigami.Icon {
+                        source: disc.pickingCountry ? "go-up" : "go-down"
+                        implicitWidth: Kirigami.Units.iconSizes.small
+                        implicitHeight: implicitWidth
+                    }
+                }
+                MouseArea {
+                    id: cbMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        disc.pickingCountry = !disc.pickingCountry
+                        if (disc.pickingCountry) countrySearch.forceActiveFocus()
+                    }
+                }
             }
+        }
+
+        // scope hint while searching inside one country
+        QQC2.Label {
+            Layout.fillWidth: true
+            visible: disc.query.trim() !== "" && disc.country !== "" && !disc.pickingCountry
+            text: app.t("نتائج هذه الدولة أولًا، ثم باقي العالم")
+            font: Kirigami.Theme.smallFont
+            opacity: 0.6
+            elide: Text.ElideRight
         }
 
         // tag chips
         Flickable {
+            visible: !disc.pickingCountry
             Layout.fillWidth: true
             Layout.preferredHeight: Kirigami.Units.gridUnit * 1.7
             contentWidth: tagRow.implicitWidth
@@ -259,8 +323,83 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
+            // country picker: search, A→Z / by size, "all countries" pinned on top
+            ColumnLayout {
+                anchors.fill: parent
+                visible: disc.pickingCountry
+                z: 10
+                spacing: Kirigami.Units.smallSpacing
+                RowLayout {
+                    Layout.fillWidth: true
+                    Kirigami.SearchField {
+                        id: countrySearch
+                        Layout.fillWidth: true
+                        placeholderText: app.t("ابحث عن دولة…")
+                        text: disc.countryFilter
+                        onTextChanged: disc.countryFilter = text
+                        Keys.onEscapePressed: { disc.pickingCountry = false; disc.countryFilter = "" }
+                        onAccepted: if (cList.count > 0) disc.pickCountry(disc.countries[0].code)
+                    }
+                    Segmented {
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 8
+                        accent: app.accent
+                        current: disc.countrySort
+                        model: [
+                            { key: "alpha", text: app.t("أبجدي"),  icon: "view-sort-ascending-name" },
+                            { key: "count", text: app.t("الأكبر"), icon: "view-sort-descending" }
+                        ]
+                        onPicked: function (key) { disc.countrySort = key }
+                    }
+                }
+                ListView {
+                    id: cList
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    model: disc.countries
+                    boundsBehavior: Flickable.StopAtBounds
+                    QQC2.ScrollBar.vertical: QQC2.ScrollBar { }
+                    delegate: QQC2.ItemDelegate {
+                        id: cRow
+                        required property var modelData
+                        required property int index
+                        width: ListView.view.width - Kirigami.Units.smallSpacing
+                        highlighted: modelData.code === disc.country
+                        onClicked: disc.pickCountry(modelData.code)
+                        // divider between the pinned rows and the full list
+                        Kirigami.Separator {
+                            anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+                            visible: !!cRow.modelData.pinned && !(disc.countries[cRow.index + 1] || {}).pinned
+                        }
+                        contentItem: RowLayout {
+                            spacing: Kirigami.Units.largeSpacing
+                            QQC2.Label { text: cRow.modelData.code === "" ? "🌍" : disc.flag(cRow.modelData.code) }
+                            QQC2.Label {
+                                Layout.fillWidth: true
+                                text: cRow.modelData.name
+                                font.weight: cRow.modelData.pinned ? Font.DemiBold : Font.Normal
+                                elide: Text.ElideRight
+                            }
+                            QQC2.Label {
+                                visible: cRow.modelData.count > 0
+                                text: cRow.modelData.count
+                                font: Kirigami.Theme.smallFont
+                                opacity: 0.5
+                            }
+                            Kirigami.Icon {
+                                visible: cRow.highlighted
+                                source: "checkmark"
+                                implicitWidth: Kirigami.Units.iconSizes.small
+                                implicitHeight: implicitWidth
+                            }
+                        }
+                    }
+                }
+            }
+
             ListView {
                 id: list
+                visible: !disc.pickingCountry
                 anchors.fill: parent
                 clip: true
                 spacing: Kirigami.Units.smallSpacing
@@ -355,13 +494,19 @@ Item {
             // states
             PlasmaComponents.BusyIndicator {
                 anchors.centerIn: parent
-                running: disc.loading && disc.results.length === 0
+                running: disc.loading && disc.results.length === 0 && !disc.pickingCountry
                 visible: running
             }
             Kirigami.PlaceholderMessage {
                 anchors.centerIn: parent
                 width: parent.width - Kirigami.Units.gridUnit * 2
-                visible: !disc.loading && disc.results.length === 0
+                visible: !disc.loading && disc.results.length === 0 && !disc.pickingCountry
+                helpfulAction: Kirigami.Action {
+                    enabled: disc.country !== "" && disc.error === ""
+                    icon.name: "globe"
+                    text: app.t("ابحث في كل الدول")
+                    onTriggered: disc.pickCountry("")
+                }
                 icon.name: disc.error !== "" ? "network-disconnect" : "edit-find"
                 text: disc.error !== "" ? disc.error : app.t("لا توجد نتائج")
                 explanation: disc.error !== "" ? "" : app.t("جرّب اسمًا آخر أو دولة أخرى")

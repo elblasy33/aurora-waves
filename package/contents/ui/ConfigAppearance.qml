@@ -82,7 +82,7 @@ KCM.SimpleKCM {
         QQC2.Button {
             Kirigami.FormData.label: page.t("أيقونة الودجت:")
             icon.name: page.cfg_customIcon !== "" ? page.cfg_customIcon : ""
-            icon.source: page.cfg_customIcon !== "" ? "" : Qt.resolvedUrl("../images/aurora-radio.svg")
+            icon.source: page.cfg_customIcon !== "" ? "" : Qt.resolvedUrl("../images/aurora-waves.svg")
             text: page.cfg_customIcon !== "" ? page.cfg_customIcon : "Aurora"
             onClicked: iconDialog.open()
             KIconThemes.IconDialog {

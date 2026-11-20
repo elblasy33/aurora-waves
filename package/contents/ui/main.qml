@@ -50,7 +50,18 @@ PlasmoidItem {
     property int tracks: 0
     property int volume: cfg.volume
     property double volumeTouched: 0
+    property bool ytQueueFetching: false
     property bool editing: false
+
+    // ---------- YouTube Music (optional; see code/ytmusic.py) ----------
+    property bool ytMode: false            // the daemon is on a YouTube Music queue
+    property var ytQueue: []               // [{id,title,artist,album,duration,thumb}]
+    property int ytIndex: 0                // song of ytQueue being played
+    property string ytName: ""             // what the queue came from ("Warda", an album...)
+    property string ytArt: ""
+    property var ytStatus: ({ checked: false, ready: false })
+    property bool ytSetupBusy: false
+    readonly property var ytTrack: ytMode && ytIndex >= 0 && ytIndex < ytQueue.length ? ytQueue[ytIndex] : null
 
     readonly property bool wantPlaying: playState === "connecting" || playState === "playing" || playState === "paused"
     readonly property bool isPlaying: playState === "playing"
@@ -63,11 +74,11 @@ PlasmoidItem {
     // ---------- plasmoid ----------
     // bundled Aurora icon unless the user picked one (older configs stored "radio" as default)
     Plasmoid.icon: (cfg.customIcon && cfg.customIcon !== "radio") ? cfg.customIcon
-                   : Qt.resolvedUrl("../images/aurora-radio.svg")
+                   : Qt.resolvedUrl("../images/aurora-waves.svg")
     Plasmoid.backgroundHints: PlasmaCore.Types.DefaultBackground | PlasmaCore.Types.ConfigurableBackground
     Plasmoid.status: wantPlaying ? PlasmaCore.Types.ActiveStatus : PlasmaCore.Types.PassiveStatus
-    toolTipMainText: previewing ? previewName : (current ? current.name : t("راديو أورورا"))
-    toolTipSubText: statusText() + "  ·  🔊 " + volume + "%"
+    toolTipMainText: ytMode && ytTrack ? ytTrack.title : previewing ? previewName : (current ? current.name : t("أمواج أورورا"))
+    toolTipSubText: (ytMode && ytTrack ? ytTrack.artist : statusText()) + "  ·  🔊 " + volume + "%"
     hideOnWindowDeactivate: !editing   // keep popup open while a file dialog is up
     switchWidth: Kirigami.Units.gridUnit * 13
     switchHeight: Kirigami.Units.gridUnit * 18
@@ -134,6 +145,7 @@ PlasmoidItem {
         switch (playState) {
         case "connecting": return t("جاري الاتصال…")
         case "playing":
+            if (ytMode) return t("يوتيوب ميوزك") + (ytQueue.length > 1 ? "  ·  " + (ytIndex + 1) + " / " + ytQueue.length : "")
             if (trackTitle !== "") return trackTitle
             return localPlayback ? t("تشغيل من ملفاتك") : t("على الهواء مباشرة")
         case "paused":     return t("متوقف مؤقتًا")
@@ -181,6 +193,94 @@ PlasmoidItem {
     function shq(s) { return "'" + String(s).replace(/'/g, "'\\''") + "'" }
 
     readonly property string sourcesPath: scriptPath.replace(/radioctl\.py$/, "sources.py")
+    readonly property string ytPath: scriptPath.replace(/radioctl\.py$/, "ytmusic.py")
+
+    function runYt(cmd, arg, cb) {
+        exec(ytPath, cmd + " " + shq(arg), function (out) {
+            var r
+            try { r = JSON.parse(out) } catch (e) { r = { error: "bad reply" } }
+            if (cb) cb(r)
+        })
+    }
+
+    // is YouTube Music set up? keeps its yt-dlp fresh (YouTube breaks old copies)
+    function ytTakeStatus(r) {
+        if (!r || r.ready === undefined) return
+        ytStatus = { checked: true, ready: r.ready, ytdlp: r.ytdlp, days: r.updatedDays,
+                     signedIn: !!r.signedIn, account: r.account || {}, browsers: r.browsers || [] }
+    }
+    function ytCheck(cb) {
+        runYt("status", "-", function (r) {
+            ytTakeStatus(r)
+            if (r && r.ready && (r.updatedDays < 0 || r.updatedDays > 5)) runYt("update", "-", ytTakeStatus)
+            if (cb) cb(ytStatus)
+        })
+    }
+    function ytSetup(cb) {
+        ytSetupBusy = true
+        runYt("setup", "-", function (r) {
+            ytSetupBusy = false
+            ytTakeStatus(r)
+            if (cb) cb(r)
+        })
+    }
+    // optional Google account: {browser: "chrome"} or {headers: "..."}
+    function ytLogin(params, cb) {
+        runYt("login", JSON.stringify(params), function (r) {
+            ytCheck(function () { if (cb) cb(r) })
+        })
+    }
+    function ytLogout(cb) {
+        runYt("logout", "-", function (r) { ytCheck(function () { if (cb) cb(r) }) })
+    }
+
+    // play a list of songs, starting at one of them
+    function playYt(list, start, name) {
+        if (!list || list.length === 0) return
+        // keep the request small (it travels as one command-line argument)
+        if (list.length > 200) {
+            var from = Math.max(0, Math.min((start || 0) - 20, list.length - 200))
+            list = list.slice(from, from + 200)
+            start = (start || 0) - from
+        }
+        start = Math.max(0, Math.min(list.length - 1, start || 0))
+        ytQueue = list.slice()
+        ytIndex = start
+        ytName = name || ""
+        ytMode = true
+        ytArt = list[start].thumb || ""
+        daemonCurrentId = "yt"
+        playState = "connecting"
+        trackTitle = list[start].title
+        trackArtist = list[start].artist
+        position = 0
+        duration = list[start].duration || 0
+        var st = daemonStations()
+        st.push({ id: "yt", name: ytName || t("يوتيوب ميوزك"), subtitle: "", url: "", kind: "yt",
+                  queue: ytQueue, start: start, art: ytArt })
+        send({ cmd: "play", id: "yt", stations: st, volume: volume })
+    }
+    // add songs to the playing queue (next, or at the end); starts playing if nothing is
+    function enqueueYt(list, next) {
+        if (!ytMode || !wantPlaying) { playYt(list, 0, ""); return }
+        if (ytQueue.length + list.length > 300) list = list.slice(0, Math.max(0, 300 - ytQueue.length))
+        if (list.length === 0) return
+        var q = ytQueue.slice()
+        var at = next ? ytIndex + 1 : q.length
+        Array.prototype.splice.apply(q, [at, 0].concat(list))
+        ytQueue = q
+        send({ cmd: "enqueue", tracks: list, next: !!next })
+    }
+    function jumpYt(i) {
+        if (!ytMode) return
+        if (!wantPlaying) { playYt(ytQueue, i, ytName); return }
+        ytIndex = i
+        send({ cmd: "jump", index: i })
+    }
+    function seek(sec) {
+        position = sec
+        send({ cmd: "seek", pos: sec })
+    }
 
     function exec(script, args, cb) {
         var cmd = "python3 -I " + shq(script) + " " + args
@@ -232,7 +332,7 @@ PlasmoidItem {
 
     function send(req) {
         req.mpris = cfg.mprisEnabled
-        req.appName = t("راديو أورورا")
+        req.appName = t("أمواج أورورا")
         req.liveText = t("بث مباشر")
         run(shq(JSON.stringify(req)), function (out) {
             try { root.handleStatus(JSON.parse(out)) } catch (e) { }
@@ -261,11 +361,39 @@ PlasmoidItem {
             cfg.lastStation = id
         }
         if (!current) return
+        // a saved YouTube Music station ("artist:ID", "album:ID", "radio:VIDEO"): fetch its songs
+        // for proper titles and covers; its playlist url is the fallback (media keys, errors)
+        if (current.kind === "yt" && current.ytRef) {
+            var st = current
+            playState = "connecting"
+            var ref = st.ytRef.split(":")
+            runYt(ref[0], ref.slice(1).join(":"), function (r) {
+                var list = r && (r.songs || r.tracks)
+                if (list && list.length) {
+                    if (st.shuffle) list = shuffled(list)
+                    playYt(list, 0, st.name)
+                } else {
+                    ytMode = false
+                    daemonCurrentId = st.id
+                    send({ cmd: "play", id: st.id, stations: daemonStations(), volume: volume })
+                }
+            })
+            return
+        }
+        ytMode = false
         playState = "connecting"
         daemonCurrentId = current.id
         trackTitle = ""
         streamInfo = ""
         send({ cmd: "play", id: current.id, stations: daemonStations(), volume: volume })
+    }
+
+    function shuffled(list) {
+        var a = list.slice()
+        for (var i = a.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1)); var tmp = a[i]; a[i] = a[j]; a[j] = tmp
+        }
+        return a
     }
 
     function stop() {
@@ -276,11 +404,19 @@ PlasmoidItem {
     }
 
     function toggle() {
-        if (!daemonAlive || playState === "stopped" || playState === "error") { play(null); return }
+        if (!daemonAlive || playState === "stopped" || playState === "error") {
+            if (ytMode && ytQueue.length > 0) playYt(ytQueue, ytIndex, ytName)
+            else play(null)
+            return
+        }
         send({ cmd: "toggle", stations: daemonStations(), volume: volume })
     }
 
     function step(delta) {
+        if (ytMode && wantPlaying) {
+            send({ cmd: delta > 0 ? "next" : "prev" })
+            return
+        }
         if (stations.length === 0) return
         var i = indexOfStation(current ? current.id : "")
         play(stations[(i + delta + stations.length) % stations.length].id)
@@ -319,6 +455,19 @@ PlasmoidItem {
         trackTitle = s.title || ""
         trackArtist = s.artist || ""
         localPlayback = !!s.local
+        if (s.yt) {
+            ytMode = true
+            ytIndex = (s.track || 1) - 1
+            if (s.art) ytArt = s.art
+            // e.g. after a plasmashell restart, or songs added from the media controller
+            if (s.ytId && (s.tracks || 0) !== ytQueue.length && !ytQueueFetching) {
+                ytQueueFetching = true
+                send({ cmd: "queue" })
+            }
+            if (s.queue) { ytQueue = s.queue; ytQueueFetching = false }
+        } else if (s.currentId && s.currentId !== "yt" && s.state !== "stopped") {
+            ytMode = false
+        }
         position = s.pos || 0
         duration = s.duration || 0
         track = s.track || 0

@@ -12,6 +12,12 @@ QQC2.Slider {
     to: 100
     stepSize: 1
     hoverEnabled: true
+    // Plasma's style sizes a Slider from its background/handle; ours declare none, which
+    // left it 0px tall there: drawn, but with no area to click or drag
+    implicitWidth: Kirigami.Units.gridUnit * 6
+    implicitHeight: 26
+    padding: 4
+    wheelEnabled: true
 
     background: Rectangle {
         x: slider.leftPadding

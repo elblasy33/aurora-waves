@@ -1,12 +1,10 @@
-# Aurora Radio — راديو أورورا
+# Aurora Waves — أمواج أورورا
 
-**Live radio from around the world, in a frosted-glass widget for KDE Plasma 6.**
-Discover tens of thousands of stations, add any stream link, and play your own music files, folders
-and playlists. It works with Plasma's media controller, with audio visualizers and with your media
-keys.
+**World radio, YouTube Music and your own music in one frosted-glass player for KDE Plasma 6.**
+Tune in to tens of thousands of live stations, search and queue any song on YouTube Music, play your
+files and playlists, and control it all from Plasma's media controller and your media keys.
 
-<p><a href="https://store.kde.org/p/2382242"><img alt="Get it on the KDE Store" src="https://img.shields.io/badge/KDE%20Store-Aurora%20Radio-1d99f3?logo=kde&logoColor=white"></a>
-<a href="https://github.com/elblasy33/plasma_radio_deploy/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/elblasy33/plasma_radio_deploy?label=release"></a>
+<p><a href="https://github.com/elblasy33/aurora-waves/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/elblasy33/aurora-waves?label=release"></a>
 <img alt="Plasma 6" src="https://img.shields.io/badge/Plasma-6-54a3d8">
 <img alt="License" src="https://img.shields.io/badge/license-GPL--2.0--or--later-blue"></p>
 
@@ -24,15 +22,15 @@ keys.
 
 | | |
 |---|---|
-| 🌍 **Discover** | Search the open [Radio Browser](https://www.radio-browser.info) directory (tens of thousands of stations in 220+ countries) by name, country and genre. Your country is preselected. Arabic searches also find Latin spellings: فيروز ↔ Fairuz, أم كلثوم ↔ Kalthom |
-| ➕ **Add anything** | A stream URL (mp3/aac/m3u8), a Dailymotion or YouTube live page, a local file, a music folder, or an M3U/PLS playlist, with shuffle |
-| ✨ **Fetch from source** | One click fills in the station name, description and logo from the directory, the stream itself or the station website |
-| 🎨 **Custom logos** | A glass letter or emoji, a system icon, an image from your computer or from a link, or the station's own logo |
-| 🩺 **Check & repair** | Listens to every stream to confirm it actually carries audio. It finds moved files, restores missing logos and suggests replacement links after testing them for audio |
-| 🎛 **MPRIS** | Appears in Plasma's media controller, in audio visualizers, on the lock screen and on the media keys, with the station name, song title and cover art |
-| 📐 **Responsive** | Separate layouts for wide, normal, short, tiny and narrow sizes, on a panel or on the desktop |
-| 🌐 **Multilingual** | English and Arabic, with left-to-right and right-to-left layouts. Follows the system language or can be set manually. New languages are easy to add |
-| 🇪🇬 **Curated library** | Egypt's official public radio (Maspero): Sawt El Arab, Middle East Radio, Radio Masr, Holy Quran and more, one click each |
+| 📻 **World radio** | Search tens of thousands of stations in 220+ countries from [Radio Browser](https://www.radio-browser.info) and [zeno.fm](https://zeno.fm), by name, country (A–Z or by size) and genre. Arabic searches also find Latin spellings: فيروز ↔ Fairuz, أم كلثوم ↔ Kalthom |
+| 🎵 **YouTube Music** *(optional)* | Search songs, artists and albums, browse the home feed in your language, open artist and album pages, build a queue (*play next*, *add to queue*, *similar radio*), seek, and save an artist, album or playlist as a station |
+| 👤 **Your account** *(optional)* | Sign in with the Google account already open in your browser to see your liked songs, playlists, history and personal recommendations. Everything works without it |
+| 📁 **Your music** | Local files, whole folders and M3U/PLS playlists, with shuffle, pause and seek |
+| ➕ **Add anything** | Any stream URL (mp3/aac/m3u8), a Dailymotion or YouTube live page; one click fetches the name, description and logo |
+| 🩺 **Check & repair** | Listens to every station to confirm it really carries audio, finds moved files, restores logos and suggests replacement links already tested for sound |
+| 🎛 **MPRIS** | Media controller, audio visualizers, lock screen and media keys, with song title and cover art |
+| 📐 **Responsive** | Wide, normal, short, tiny and narrow layouts, on a panel or on the desktop |
+| 🌐 **Multilingual** | English and Arabic with left-to-right and right-to-left layouts; easy to add more languages |
 
 <p align="center"><img src="docs/screenshots/sizes.png" width="95%" alt="Layouts at different sizes"></p>
 
@@ -42,69 +40,68 @@ keys.
 
 ### 1. Requirements
 
-Most of these are already installed on a typical Plasma desktop.
+Most of these are already on a typical Plasma desktop.
 
 | Package | Used for |
 |---|---|
 | `mpv` | Playback |
-| `yt-dlp` | Dailymotion / YouTube live pages |
 | `ffmpeg` | Check & repair, which listens to each stream |
 | `python3-gi` | The background service that publishes MPRIS |
+| `python3-pip` | *YouTube Music only:* the one-click setup downloads its two libraries |
+| `yt-dlp` | Dailymotion / YouTube live-page stations |
 | `imagemagick` | *Optional:* converts `.ico` favicons into logos |
 
 ```sh
 # Debian / Ubuntu / KDE neon
-sudo apt install mpv yt-dlp ffmpeg python3-gi imagemagick
+sudo apt install mpv ffmpeg python3-gi python3-pip yt-dlp imagemagick
 # Fedora
-sudo dnf install mpv yt-dlp ffmpeg python3-gobject ImageMagick
+sudo dnf install mpv ffmpeg python3-gobject python3-pip yt-dlp ImageMagick
 # Arch / Manjaro
-sudo pacman -S mpv yt-dlp ffmpeg python-gobject imagemagick
+sudo pacman -S mpv ffmpeg python-gobject python-pip yt-dlp imagemagick
 ```
-
-> Keep `yt-dlp` up to date. Video sites change often, and an old `yt-dlp` is the most common reason
-> video-page stations stop playing.
 
 ### 2. Install the widget (choose one)
 
-**A. From Plasma ([KDE Store](https://store.kde.org/p/2382242)):**
-right-click the desktop or a panel → **Add Widgets…** → **Get New Widgets…** → **Download New Plasma
-Widgets** → search for **Aurora Radio** → **Install**.
+**A. From Plasma (KDE Store):** right-click the desktop or a panel → **Add Widgets…** →
+**Get New Widgets…** → **Download New Plasma Widgets** → search for **Aurora Waves** → **Install**.
 
-**B. From a `.plasmoid` file:**
-download the latest `aurora-radio-x.y.z.plasmoid` from
-[Releases](https://github.com/elblasy33/plasma_radio_deploy/releases), then:
+**B. From a `.plasmoid` file:** download the latest `aurora-waves-x.y.z.plasmoid` from
+[Releases](https://github.com/elblasy33/aurora-waves/releases), then:
 
 ```sh
-kpackagetool6 -t Plasma/Applet -i aurora-radio-1.1.1.plasmoid
+kpackagetool6 -t Plasma/Applet -i aurora-waves-2.0.0.plasmoid
 ```
 
-or go to **Add Widgets… → Get New Widgets… → Install Widget From Local File…**
+or use **Add Widgets… → Get New Widgets… → Install Widget From Local File…**
 
 **C. From source:**
 
 ```sh
-git clone https://github.com/elblasy33/plasma_radio_deploy.git
-cd plasma_radio_deploy
+git clone https://github.com/elblasy33/aurora-waves.git
+cd aurora-waves
 ./install.sh --restart
 ```
 
 ### 3. Add it
 
-Right-click a panel or the desktop → **Add Widgets…** → search for **Aurora Radio** and drag it where
-you want it. On first run it opens with a welcome screen. Press **Discover stations** to browse
-stations from your country.
+Right-click a panel or the desktop → **Add Widgets…** → search for **Aurora Waves** and drag it where
+you want it. The first run shows a welcome screen; **Discover stations** opens the stations of your
+country.
+
+> **Coming from Aurora Radio?** Aurora Waves is the same widget, renamed. It updates in place and
+> keeps your stations and settings.
 
 ### Update
 
 - **KDE Store:** *Get New Widgets* shows an **Update** button.
-- **Source:** run `git pull && ./install.sh --restart`.
+- **Source:** `git pull && ./install.sh --restart`
 
 ### Uninstall
 
 ```sh
 kpackagetool6 -t Plasma/Applet -r com.github.elblasy33.auroraradio
 rm -f ~/.local/share/applications/aurora-radio.desktop     # media-controller icon entry
-rm -rf ~/.local/share/aurora-radio ~/.cache/aurora-radio    # optional: saved logos and cover art
+rm -rf ~/.local/share/aurora-radio ~/.cache/aurora-radio    # optional: logos, cover art, YouTube Music libraries and sign-in
 ```
 
 ---
@@ -120,57 +117,61 @@ rm -rf ~/.local/share/aurora-radio ~/.cache/aurora-radio    # optional: saved lo
 | Mouse wheel | Volume |
 | Right click | Play/stop, next station, manage stations, settings |
 
-While a station is playing, the panel icon shows that station's logo with a glowing ring.
-
 ### The player
 
-- Click the **big logo** or the **play** button to play or stop. Local files pause instead of
-  stopping.
-- **⏮ / ⏭** switch station. On the keyboard: **Space** plays or stops, **← / →** change station,
-  **↑ / ↓** change the volume.
-- Click a station tile to play it. **Right-click** a tile to play, edit, duplicate or delete it.
-- If you set **categories**, chips appear above the stations so you can filter them.
+- Click the **big cover** or **play** to play or stop. Songs and local files pause instead of stopping.
+- **⏮ / ⏭** change station, or move through the queue when YouTube Music is playing.
+- Click or drag the **progress bar** to seek in songs and files.
+- Keyboard: **Space** play/stop, **← / →** previous/next, **↑ / ↓** volume.
+- Click a station tile to play it; **right-click** a tile to play, edit, duplicate or delete it.
+
+### YouTube Music (♪ button)
+
+1. The first time, press **Set up YouTube Music**. It downloads two small libraries
+   (`ytmusicapi` and `yt-dlp`) into the widget's own folder: no admin rights, no system changes.
+   The widget keeps its `yt-dlp` up to date by itself, because YouTube changes often.
+2. Before you type, the page shows YouTube Music's **home feed** in your language.
+3. Search, then pick **All / Songs / Artists / Albums**. Clicking a song plays it at once and fills
+   the queue with similar songs. Artist, album and playlist pages have **Play**, **Shuffle** and
+   **Save as station**.
+4. **⋮** next to a song: *Play next*, *Add to queue*, *Similar radio*, *Like* (signed in), *Save as station*.
+5. The **queue** button (top) lists what's coming; click any song to jump to it.
+
+**Signing in (optional, 👤 button).** Google does not allow signing in from inside a widget, so
+Aurora Waves reuses the session of a browser where you are already signed in to
+music.youtube.com (Chrome, Chromium, Brave, Edge, Vivaldi, Opera or Firefox). It is read only when
+you press the button, stored on your computer only (`~/.local/share/aurora-radio`, readable by you
+alone), refreshed from the browser every 12 hours, and removed by **Sign out**. A manual method
+(pasting request headers from the browser's developer tools) is also offered.
 
 ### Managing stations (✏️ button)
 
-- **Discover**: search the world directory. Your country is preselected, and a name search covers
-  every country with yours listed first. **▶** gives a quick listen and **＋** adds the station with
-  its name, logo and country.
-- **New**: add a station yourself.
-  - **Source:** a *Stream link* (any URL or a Dailymotion/YouTube page), a *File*, a *Folder* or a
-    *Playlist*.
-  - **Fetch:** fills in the name, description and logo from the source.
-  - **Logo:** a *Letter* (or emoji), an *Icon* from your icon theme, an *Image* from your computer
-    or a link, or *From source*. Images are copied into the widget's own folder, so moving the
-    original file is safe.
-  - **Try:** listen before you save.
-- **Import**: turns every entry of an `.m3u`/`.pls` file into a station.
-- **Egyptian public radio (Maspero)**: a curated set of official stations, one click each.
-- **Check**: see [Check & repair](#check--repair).
-- The station list has buttons to reorder, edit, duplicate and delete.
+- **Discover**: the world directory. Your country is preselected; a name search covers every
+  country with yours first. The country picker has a search box and **A–Z / Largest** sorting.
+  **▶** gives a quick listen, **＋** adds the station.
+- **New**: a *Stream link*, *File*, *Folder* or *Playlist*; **Fetch** fills in the name and logo;
+  logos can be a letter or emoji, an icon, an image or the station's own.
+- **Import**: every entry of an `.m3u`/`.pls` file becomes a station.
+- **Egyptian public radio (Maspero)**: a curated set of official stations.
+- **Check**: see below.
 
 ### Check & repair
 
-This listens to a few seconds of every station and reports what is wrong:
+Listens to a few seconds of every station and reports what is wrong:
 
 | Problem | What it means | Suggested fix |
 |---|---|---|
-| The source refuses (401/403) | The broadcaster closed the link or requires authorization | A replacement link from the directory, already tested for audio |
-| Not found (404) / unreachable / timed out | The link is dead or the server is down | Same as above |
-| No audio / silent | It connects, but there is no sound | Same as above |
-| Path not found | A file or folder was moved | Finds it by name in Music, Downloads, Desktop, external drives and the rest of your home folder |
-| Missing or online-only logo | The logo file is gone, or only exists online | Fetches it again, saves a local copy, or falls back to a glass letter |
+| The source refuses (401/403) | The broadcaster closed the link | A replacement from Radio Browser or zeno.fm, already tested for audio |
+| Not found / unreachable / timed out | Dead link or server down | Same as above |
+| No audio / silent | Connects, but no sound | Same as above |
+| Path not found | A file or folder was moved | Finds it by name in your music, downloads, desktop and drives |
+| Missing or online-only logo | The logo is gone or only online | Fetches it again, keeps a local copy, or uses a glass letter |
 
-Use **Fix** for one problem, **Fix all**, **Edit manually**, or **Ignore**.
+### Settings (⚙)
 
-### Settings (⚙ button, or right-click → Configure)
-
-- **Appearance:** glass opacity, the animated aurora background and its strength, accent color (the
-  station's or the system's), animations, logo shape (squircle, circle or soft square), grid or
-  list, number of columns, category chips, equalizer, stream info, panel icon style, widget icon,
-  and the station name next to the panel icon.
-- **General:** **language** (automatic, English or العربية), MPRIS on or off, play the last station
-  on login, and the mouse-wheel volume step.
+- **Appearance:** glass opacity, aurora background, accent color, animations, logo shape, grid or
+  list, columns, category chips, equalizer, stream info, panel icon.
+- **General:** language (automatic, English, العربية), MPRIS, resume on login, wheel volume step.
 
 ---
 
@@ -178,13 +179,15 @@ Use **Fix** for one problem, **Fix all**, **Edit manually**, or **Ignore**.
 
 | Symptom | What to do |
 |---|---|
-| Dailymotion / YouTube stations don't play | Update `yt-dlp` (`sudo apt install --only-upgrade yt-dlp`, or `pipx upgrade yt-dlp`) |
-| One station never plays | Run **Check**. If the source refuses or is silent, the problem is at the broadcaster. Pick the suggested replacement or remove the station |
-| Not shown in the media controller or visualizer | Make sure **MPRIS** is enabled in Settings → General and that `python3-gi` is installed |
-| A change doesn't appear after updating | Reload Plasma: `systemctl --user restart plasma-plasmashell` |
-| Stop the background service by hand | `python3 ~/.local/share/plasma/plasmoids/com.github.elblasy33.auroraradio/contents/code/radioctl.py '{"cmd":"quit"}'` |
+| YouTube Music songs stop playing | Open the ♪ page once: the widget updates its own `yt-dlp` when it is a few days old |
+| Dailymotion / YouTube live stations don't play | Update the system `yt-dlp` |
+| One station never plays | Run **Check** and pick the suggested replacement |
+| "No signed-in YouTube account was found" | Open music.youtube.com in that browser, sign in, then try again |
+| Not shown in the media controller | Enable **MPRIS** in Settings → General; make sure `python3-gi` is installed |
+| A change doesn't appear after updating | `systemctl --user restart plasma-plasmashell` |
+| Stop the background service | `python3 ~/.local/share/plasma/plasmoids/com.github.elblasy33.auroraradio/contents/code/radioctl.py '{"cmd":"quit"}'` |
 
-Please report bugs at [Issues](https://github.com/elblasy33/plasma_radio_deploy/issues).
+Please report bugs at [Issues](https://github.com/elblasy33/aurora-waves/issues).
 
 ---
 
@@ -196,72 +199,76 @@ package/
 └── contents/
     ├── config/                settings schema (main.xml) and settings pages
     ├── ui/                    QML: main.qml (state), FullView, StationEditor, DiscoverPage,
-    │                          HealthPage, glass components (GlassPanel, StationLogo, Aurora…)
+    │                          YTMusicPage, HealthPage, glass components (GlassPanel, StationLogo…)
     ├── code/
-    │   ├── radiod.py          playback service: one mpv process, auto-reconnect, MPRIS on D-Bus
+    │   ├── radiod.py          playback service: one mpv process, queues, auto-reconnect, MPRIS
     │   ├── radioctl.py        client used by the widget (unix socket, one JSON request per call)
-    │   ├── sources.py         directory search, countries, fetch from source, logos, audio check
-    │   ├── presets.js         curated Maspero library, defaults per country, color palette, glyphs
+    │   ├── sources.py         Radio Browser + zeno.fm search, countries, fetch from source, audio check
+    │   ├── ytmusic.py         YouTube Music: setup, search, home, artists, albums, playlists, sign-in
+    │   ├── presets.js         curated Maspero library, defaults per country, palette, glyphs
     │   └── i18n.js            translations (Arabic text is the key, EN holds English)
-    └── images/logos/          bundled station logos
+    └── images/                app icon and bundled station logos
 ```
 
 - **Install while developing:** `./install.sh --restart`
-- **Build a `.plasmoid` for a release or the store:** `./build.sh`, which writes
-  `dist/aurora-radio-<version>.plasmoid`
+- **Build a `.plasmoid`:** `./build.sh` → `dist/aurora-waves-<version>.plasmoid`
 - **Try it in a window:** `plasmoidviewer -a package`
-- **Add a language:** add a table like `EN` in `code/i18n.js` and return it from `resolve()` and
-  `tr()`.
-- **Add a curated library:** add entries to `catalog` in `code/presets.js`. `defaults()` decides
-  which stations a new user starts with, based on their country.
-- **Data on disk:** saved logos are in `~/.local/share/aurora-radio/logos/` and rendered cover art is
-  in `~/.cache/aurora-radio/art/`.
+- **Add a language:** add a table like `EN` in `code/i18n.js` and return it from `resolve()` and `tr()`.
+- **Data on disk:** `~/.local/share/aurora-radio/` holds logos, the private Python libraries for
+  YouTube Music (`pylib/`) and the optional sign-in; `~/.cache/aurora-radio/` holds cover art.
+  (The internal id and folders keep their original *aurora-radio* names so updates keep user data.)
 
 ### Notes
 
-- Station data comes from Radio Browser, which is community-maintained, so some entries go offline.
-  **Check & repair** exists for exactly that.
-- The Maspero stations are the broadcaster's public live pages. The widget plays them as a normal
-  viewer would and does not get around any restriction.
+- Radio Browser and zeno.fm are community directories, so some entries go offline; **Check &
+  repair** exists for exactly that.
+- YouTube Music support uses the unofficial [ytmusicapi](https://github.com/sigma67/ytmusicapi) and
+  [yt-dlp](https://github.com/yt-dlp/yt-dlp). It is optional, off until you set it up, and meant for
+  personal listening. It is not affiliated with or endorsed by Google or YouTube.
 
 ---
 
 ## بالعربي
 
-**راديو أورورا: ودجت لسطح مكتب KDE Plasma 6 لتشغيل إذاعات العالم بث مباشر، بواجهة زجاجية.** بيخليك تكتشف عشرات الآلاف من الإذاعات، وتضيف أي رابط بث، وتشغّل ملفات الموسيقى والمجلدات وقوائم التشغيل بتاعتك. وبيظهر في متحكم الوسائط بتاع Plasma وفي الـ Visualizer.
+**أمواج أورورا: إذاعات العالم ويوتيوب ميوزك وموسيقاك في مشغّل زجاجي واحد لسطح مكتب KDE Plasma 6.**
+بتسمع عشرات الآلاف من الإذاعات بث مباشر، وتدوّر على أي أغنية في يوتيوب ميوزك وتعمل لها قائمة تشغيل، وتشغّل ملفاتك وقوائمك، وكل ده بيظهر في متحكم الوسائط وأزرار الميديا.
+
+> **كنت بتستخدم راديو أورورا؟** هو نفس الودجت باسم جديد. هيتحدّث مكانه، ومحطاتك وإعداداتك هتفضل زي ما هي.
 
 ### التثبيت
-1. **سطّب المتطلبات:**
-   `sudo apt install mpv yt-dlp ffmpeg python3-gi imagemagick`
-2. **سطّب الودجت بطريقة من دول:**
-   - **من [متجر KDE](https://store.kde.org/p/2382242):** كليك يمين على سطح المكتب ← **إضافة عناصر واجهة** ← **احصل على عناصر جديدة** ← دوّر على **Aurora Radio**.
-   - **من ملف:** نزّل ملف `.plasmoid` من [Releases](https://github.com/elblasy33/plasma_radio_deploy/releases) وشغّل:
-     `kpackagetool6 -t Plasma/Applet -i aurora-radio-1.1.1.plasmoid`
+1. **المتطلبات:**
+   `sudo apt install mpv ffmpeg python3-gi python3-pip yt-dlp imagemagick`
+2. **الودجت:**
+   - **من متجر KDE:** كليك يمين على سطح المكتب ← **إضافة عناصر واجهة** ← **احصل على عناصر جديدة** ← دوّر على **Aurora Waves**.
+   - **من ملف:** نزّل `aurora-waves-x.y.z.plasmoid` من [Releases](https://github.com/elblasy33/aurora-waves/releases) وشغّل:
+     `kpackagetool6 -t Plasma/Applet -i aurora-waves-2.0.0.plasmoid`
    - **من المصدر:**
-     `git clone https://github.com/elblasy33/plasma_radio_deploy.git && cd plasma_radio_deploy && ./install.sh --restart`
-3. **ضيفه:** من **إضافة عناصر واجهة**، دوّر على **راديو أورورا** واسحبه للوحة أو لسطح المكتب.
+     `git clone https://github.com/elblasy33/aurora-waves.git && cd aurora-waves && ./install.sh --restart`
+3. **ضيفه:** من **إضافة عناصر واجهة** دوّر على **أمواج أورورا** واسحبه للوحة أو لسطح المكتب.
 
 ### الاستخدام
-- **أيقونة اللوحة:**
-  - **كليك:** بيفتح المشغّل.
-  - **كليك بالعجلة:** تشغيل وإيقاف.
-  - **لف العجلة:** الصوت.
-- **أول تشغيل:** بتظهر شاشة ترحيب فيها زر **اكتشف المحطات**، وبيفتح على إذاعات بلدك.
-- **✏️ إدارة المحطات:**
-  - **اكتشف:** بحث في إذاعات العالم. البحث بالعربي بيلاقي الأسماء اللاتينية كمان.
-  - **جديدة:** إضافة رابط أو ملف أو مجلد أو قائمة تشغيل، مع **جلب** الاسم واللوجو من المصدر.
-  - **الإذاعات المصرية الرسمية (ماسبيرو):** بضغطة واحدة.
-  - **استيراد M3U:** كل سطر في الملف بيبقى محطة.
-- **فحص وإصلاح:** بيستمع فعلًا لكل محطة كام ثانية، وبيقولك السبب لو مفيش صوت، وبيلاقي الملفات اللي اتنقلت، وبيقترح روابط بديلة جرّبها قبل ما يقترحها.
-- **⚙ الإعدادات:** المظهر، وطريقة العرض، و**اللغة** (تلقائي، أو العربية، أو English)، وMPRIS، وتشغيل آخر محطة عند الدخول.
+- **الراديو:** من ✏️ ← **اكتشف** تدوّر في إذاعات العالم (Radio Browser و zeno.fm). اختيار الدولة فيه بحث وترتيب **أبجدي** أو **الأكبر**.
+- **يوتيوب ميوزك (زرار ♪):**
+  - أول مرة اضغط **تفعيل يوتيوب ميوزك**. هينزّل مكتبتين صغيرتين جوه مجلد الودجت بس، من غير صلاحيات مدير.
+  - قبل ما تكتب، بتظهر لك اقتراحات يوتيوب ميوزك بلغتك.
+  - لما تضغط على أغنية بتشتغل على طول، وبعدها أغاني شبهها. صفحات الفنان والألبوم فيها **تشغيل** و**عشوائي** و**حفظ كمحطة**.
+  - زرار **⋮** جنب الأغنية: تشغيل التالي، إضافة للقائمة، راديو مشابه، أعجبني.
+- **حسابك (اختياري، زرار 👤):**
+  - جوجل مش بتسمح بتسجيل الدخول من جوه الودجت، فبنستخدم حسابك المفتوح في المتصفح.
+  - سجّل دخولك في music.youtube.com من المتصفح، وبعدين اختار المتصفح من الودجت.
+  - هيظهر لك الأغاني اللي عجبتك وقوائمك وسجلك، والاقتراحات هتبقى على ذوقك.
+  - الجلسة بتتحفظ على جهازك بس، وفيه زرار **تسجيل الخروج**.
+- **فحص وإصلاح:** بيسمع كل محطة كام ثانية، ويقولك السبب لو مفيش صوت، ويقترح روابط بديلة اتجربت قبلها.
+- **⚙ الإعدادات:** المظهر، وطريقة العرض، و**اللغة** (تلقائي أو العربية أو English)، وMPRIS.
 
 ### حل المشاكل
-- **محطات Dailymotion أو YouTube مش شغالة:** حدّث `yt-dlp`.
-- **محطة واحدة مش شغالة:** شغّل **فحص** واختار البديل المقترح.
-- **تعديل مش ظاهر بعد التحديث:** شغّل `systemctl --user restart plasma-plasmashell`.
+- **أغاني يوتيوب وقفت:** افتح صفحة ♪ مرة. الودجت بيحدّث نسخة `yt-dlp` بتاعته لوحده.
+- **محطة مش شغالة:** شغّل **فحص** واختار البديل المقترح.
+- **تعديل مش ظاهر بعد التحديث:** `systemctl --user restart plasma-plasmashell`
 
 ---
 
 ## License
 
 GPL-2.0-or-later. See [LICENSE](LICENSE).
+YouTube and YouTube Music are trademarks of Google LLC; this project is not affiliated with them.

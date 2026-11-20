@@ -3,20 +3,20 @@
     "X-Plasma-API-Minimum-Version": "6.0",
     "KPlugin": {
         "Id": "com.github.elblasy33.auroraradio",
-        "Name": "Aurora Radio",
-        "Name[ar]": "راديو أورورا",
-        "Description": "Live radio from around the world in a glass interface — discover stations, play your music, MPRIS",
-        "Description[ar]": "إذاعات العالم بث مباشر بواجهة زجاجية — اكتشف المحطات وشغّل موسيقاك، مع دعم MPRIS",
+        "Name": "Aurora Waves",
+        "Name[ar]": "أمواج أورورا",
+        "Description": "World radio, YouTube Music and your own music in one frosted-glass player — discover, search, queue, MPRIS",
+        "Description[ar]": "إذاعات العالم ويوتيوب ميوزك وموسيقاك في مشغّل زجاجي واحد — اكتشف وابحث وشغّل، مع دعم MPRIS",
         "Icon": "radio",
         "Category": "Multimedia",
         "License": "GPL-2.0-or-later",
-        "Version": "1.1.1",
+        "Version": "2.0.0",
         "Authors": [
             {
                 "Name": "elblasy33"
             }
         ],
-        "Website": "https://github.com/elblasy33/plasma_radio_deploy",
-        "BugReportUrl": "https://github.com/elblasy33/plasma_radio_deploy/issues"
+        "Website": "https://github.com/elblasy33/aurora-waves",
+        "BugReportUrl": "https://github.com/elblasy33/aurora-waves/issues"
     }
 }

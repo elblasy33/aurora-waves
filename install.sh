@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install or update the "Aurora Radio" plasmoid for the current user.
+# Install or update the "Aurora Waves" plasmoid for the current user.
 #   ./install.sh            install / update
 #   ./install.sh --restart  ... and reload plasmashell so the new version shows immediately
 set -e

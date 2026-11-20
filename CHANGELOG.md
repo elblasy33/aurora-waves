@@ -1,5 +1,27 @@
 # Changelog
 
+## 2.0.0 — 2026-11-20
+
+**Aurora Radio is now Aurora Waves**: world radio, YouTube Music and your own music in one player.
+Same plugin id, so it updates in place and keeps your stations and settings. New app icon and a
+new home: <https://github.com/elblasy33/aurora-waves>.
+
+- **YouTube Music** (optional, one-click setup into the widget's own folder): search songs,
+  artists and albums; home feed in your language; artist, album and playlist pages; queue with
+  play next, add to queue and similar-song radio; seekable progress bar; save an artist, album,
+  playlist or song radio as a station; titles and covers in the media controller
+- **Optional Google sign-in** through the browser you already use (or pasted request headers):
+  liked songs, playlists, history, personal recommendations and *Like*
+- The widget keeps its own `yt-dlp` fresh for YouTube playback
+- **Discover**: zeno.fm joins Radio Browser as a second directory (many single-artist streams such as
+  Warda live there); new country picker with search, **A–Z / Largest** sorting and *All countries*
+  pinned on top; country names in the interface language; "Search all countries" when a country
+  has no results
+- **Check & repair** looks in both directories and matches stations by every spelling of the name
+- Fixed: the volume slider ignored the mouse under Plasma's own style (it was 0 px tall)
+- Fixed: clicking a song in an artist or album list always played the first song
+- Every new text is translated to English
+
 ## 1.1.1 — 2026-11-19
 
 - New Aurora app icon (widget, media controller and visualizers)

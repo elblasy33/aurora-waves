@@ -43,7 +43,9 @@ Item {
     readonly property var cur: app.current
     readonly property color fg: Kirigami.Theme.textColor
     readonly property bool anim: cfg.animations
-    readonly property bool curIsLocal: app.kindOf(cur) !== "stream"
+    readonly property bool curIsLocal: app.kindOf(cur) !== "stream" || yt
+    // a YouTube Music song is on: the card shows the song instead of the station
+    readonly property bool yt: app.ytMode && app.ytTrack !== null
     readonly property var visibleStations: {
         if (app.groupFilter === "" || !cfg.showGroups) return app.stations
         return app.stations.filter(function (s) { return (s.group || "") === app.groupFilter })
@@ -59,7 +61,7 @@ Item {
         anchors.margins: -Kirigami.Units.largeSpacing
         visible: full.cfg.auroraEnabled
         color: app.accent
-        image: full.cur ? app.logoUrl(full.cur.logo) : ""
+        image: full.yt ? app.ytTrack.thumb : (full.cur ? app.logoUrl(full.cur.logo) : "")
         running: full.visible && app.expanded && full.anim
         strength: full.cfg.auroraStrength * (app.wantPlaying ? 1.0 : 0.6)
     }
@@ -83,7 +85,7 @@ Item {
             Layout.columnSpan: full.wide ? 2 : 1
             visible: !full.mini
             Kirigami.Icon { source: Plasmoid.icon; Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium; Layout.preferredHeight: width }
-            Kirigami.Heading { text: app.t("راديو أورورا"); level: 3; font.weight: Font.DemiBold }
+            Kirigami.Heading { text: app.t("أمواج أورورا"); level: 3; font.weight: Font.DemiBold }
             QQC2.Label {
                 text: app.stations.length + app.t(" محطة")
                 visible: !full.narrow
@@ -91,6 +93,14 @@ Item {
                 font: Kirigami.Theme.smallFont
             }
             Item { Layout.fillWidth: true }
+            GlassButton {
+                iconName: "music-note-16th"
+                toolTip: app.t("يوتيوب ميوزك")
+                implicitHeight: Kirigami.Units.gridUnit * 1.7
+                filled: full.yt
+                accent: app.accent
+                onClicked: { editorPage.discovering = false; editorPage.checking = false; app.editing = true; editorPage.ytOpen = true }
+            }
             GlassButton {
                 iconName: "configure"
                 toolTip: app.t("الإعدادات")
@@ -113,7 +123,7 @@ Item {
             Layout.alignment: Qt.AlignTop
             Layout.preferredHeight: nowCol.implicitHeight + Kirigami.Units.gridUnit * (full.horizontalCard ? 1.2 : 1.6)
             radius: full.horizontalCard ? 20 : 26
-            visible: full.cur !== null
+            visible: full.cur !== null || full.yt
 
             GridLayout {
                 id: nowCol
@@ -143,9 +153,10 @@ Item {
                         id: bigLogo
                         anchors.centerIn: parent
                         width: full.logoSize; height: full.logoSize
-                        logo: app.previewing ? app.previewLogo : (full.cur ? (full.cur.logo || "") : "")
-                        tint: app.previewing ? app.previewColor : (full.cur ? full.cur.color : "gray")
-                        glyph: app.previewing ? Presets.glyphFor(app.previewName) : (full.cur ? (full.cur.glyph || "") : "")
+                        logo: full.yt ? (app.ytTrack.thumb || "icon:music-note-16th")
+                              : app.previewing ? app.previewLogo : (full.cur ? (full.cur.logo || "") : "")
+                        tint: full.yt ? "#e53935" : app.previewing ? app.previewColor : (full.cur ? full.cur.color : "gray")
+                        glyph: full.yt ? "♪" : app.previewing ? Presets.glyphFor(app.previewName) : (full.cur ? (full.cur.glyph || "") : "")
                         opacity: app.isPaused ? 0.75 : 1
                         scale: logoMouse.pressed ? 0.95 : (app.isPlaying ? 1.0 : 0.96)
                         Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutBack } }
@@ -167,7 +178,8 @@ Item {
                     Kirigami.Heading {
                         Layout.fillWidth: true
                         horizontalAlignment: full.horizontalCard ? Text.AlignLeft : Text.AlignHCenter
-                        text: app.previewing ? "🎧 " + app.previewName : (full.cur ? full.cur.name : "")
+                        text: full.yt ? app.ytTrack.title
+                              : app.previewing ? "🎧 " + app.previewName : (full.cur ? full.cur.name : "")
                         level: full.horizontalCard ? 2 : 1
                         font.weight: Font.Bold
                         elide: Text.ElideRight
@@ -178,6 +190,9 @@ Item {
                         horizontalAlignment: full.horizontalCard ? Text.AlignLeft : Text.AlignHCenter
                         visible: text !== ""
                         text: {
+                            if (full.yt)
+                                return [app.ytTrack.artist, app.ytTrack.album].filter(function (x) {
+                                    return x && x !== app.ytTrack.title }).join("  ·  ")
                             if (app.localPlayback && app.wantPlaying) {
                                 var t = app.tracks > 1 ? app.t("مقطع ") + app.track + app.t(" من ") + app.tracks : ""
                                 var a = app.trackArtist && full.cur && app.trackArtist !== full.cur.name ? app.trackArtist : ""
@@ -254,19 +269,47 @@ Item {
                         LayoutMirroring.enabled: false
                         LayoutMirroring.childrenInherit: true
                         Rectangle {
+                            id: progressBar
                             Layout.fillWidth: true
-                            height: 6; radius: 3
+                            implicitHeight: seekArea.containsMouse || seekArea.pressed ? 8 : 6; radius: height / 2
                             color: Qt.rgba(full.fg.r, full.fg.g, full.fg.b, 0.12)
+                            Behavior on height { NumberAnimation { duration: 120 } }
+                            readonly property real shown: seekArea.pressed ? seekArea.frac
+                                                          : Math.min(1, app.position / Math.max(1, app.duration))
                             Rectangle {
-                                height: parent.height; radius: 3
-                                width: parent.width * Math.min(1, app.position / Math.max(1, app.duration))
+                                height: parent.height; radius: height / 2
+                                width: parent.width * progressBar.shown
                                 color: app.accent
-                                Behavior on width { NumberAnimation { duration: 900 } }
+                                Behavior on width { enabled: !seekArea.pressed; NumberAnimation { duration: 900 } }
+                            }
+                            Rectangle {
+                                visible: seekArea.containsMouse || seekArea.pressed
+                                width: 14; height: 14; radius: 7
+                                anchors.verticalCenter: parent.verticalCenter
+                                x: parent.width * progressBar.shown - width / 2
+                                color: "white"
+                                border.width: 3; border.color: app.accent
+                            }
+                            // click / drag to seek
+                            MouseArea {
+                                id: seekArea
+                                anchors.fill: parent
+                                anchors.topMargin: -8; anchors.bottomMargin: -8
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                property real frac: 0
+                                function at(x) { return Math.max(0, Math.min(1, x / width)) }
+                                onPressed: function (m) { frac = at(m.x) }
+                                onPositionChanged: function (m) { if (pressed) frac = at(m.x) }
+                                onReleased: app.seek(frac * app.duration)
                             }
                         }
                         RowLayout {
                             Layout.fillWidth: true
-                            QQC2.Label { text: app.fmtTime(app.position); font: Kirigami.Theme.smallFont; opacity: 0.6 }
+                            QQC2.Label {
+                                text: app.fmtTime(seekArea.pressed ? seekArea.frac * app.duration : app.position)
+                                font: Kirigami.Theme.smallFont; opacity: 0.6
+                            }
                             Item { Layout.fillWidth: true }
                             QQC2.Label { text: app.fmtTime(app.duration); font: Kirigami.Theme.smallFont; opacity: 0.6 }
                         }
@@ -388,7 +431,7 @@ Item {
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.WordWrap
                     level: 2
-                    text: app.t("أهلًا بك في راديو أورورا")
+                    text: app.t("أهلًا بك في أمواج أورورا")
                 }
                 QQC2.Label {
                     Layout.fillWidth: true

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Client for radiod.py, used by the Aurora Radio plasmoid.
+"""Client for radiod.py, used by the Aurora Waves plasmoid.
 
 Usage:
   radioctl.py '<json request>'      e.g. '{"cmd":"status"}'  -> prints JSON reply

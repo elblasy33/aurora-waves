@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Station discovery and logo helpers for the Aurora Radio plasmoid.
+"""Station discovery and logo helpers for the Aurora Waves plasmoid.
 
   sources.py search '<json>'   {"q","country","tag","limit","offset"} -> [station...]
   sources.py probe <url>       -> {"name","subtitle","logo","homepage"}  (logo = local file:// or "")
@@ -66,8 +66,8 @@ def clean_station(s):
 ALIASES = {
     "ام كلثوم": ["kalthom", "kalthoum", "kulthum", "kolthoum", "koulthoum", "kolthom", "kalsoum"],
     "فيروز": ["fairuz", "fairouz", "fayrouz", "fayruz", "feiruz", "fyroz"],
-    "عبد الحليم": ["halim", "abdel halim", "abdelhalim", "hafez"],
-    "عبدالحليم": ["halim", "abdel halim", "abdelhalim", "hafez"],
+    "عبد الحليم": ["halim", "abdel halim", "abdelhalim", "abdelhalim hafez"],
+    "عبدالحليم": ["halim", "abdel halim", "abdelhalim", "abdelhalim hafez"],
     "عمرو دياب": ["amr diab", "diab"],
     "عبد الوهاب": ["abdel wahab", "abdelwahab", "wahab", "wahhab"],
     "وردة": ["warda"],
@@ -174,20 +174,148 @@ def search(params):
             if key in seen or not c["url"].startswith(("http://", "https://")):
                 continue
             seen.add(key)
+            seen.add(c["url"])
             merged.append(c)
-    merged.sort(key=lambda c: (c["countrycode"] != country if country else False, -c["votes"]))
+    # Radio Browser misses many single-artist streams (Warda, Halim...) that live on zeno.fm
+    if not tag and offset == 0:
+        for c in zeno_search(variants):
+            if c["url"] not in seen:
+                seen.add(c["url"])
+                merged.append(c)
+    pats = name_patterns(params.get("q") or "")
+    merged.sort(key=lambda c: (c["countrycode"] != country if country else False,
+                               not matches_name(pats, c["name"]), -c["votes"]))
     return merged[offset:offset + limit]
 
 
-def countries():
+# ------------------------------------------------------------------ zeno.fm
+ZENO = "https://zeno.fm/api/stations/"
+_COUNTRY_CODES = None
+
+
+def country_code(name):
+    """ISO code for an English country name ("Egypt" -> "EG"), from the system iso-codes data."""
+    global _COUNTRY_CODES
+    if _COUNTRY_CODES is None:
+        table = {}           # built fully before publishing: zeno lookups run in threads
+        for c in _iso_countries():
+            for k in ("name", "common_name", "official_name"):
+                if c.get(k):
+                    table[c[k].lower()] = c["alpha_2"]
+        _COUNTRY_CODES = table
+    return _COUNTRY_CODES.get((name or "").strip().lower(), "")
+
+
+def _zeno_get(url):
+    # zeno.fm answers browsers only
+    body, _, _ = http_get(url, headers={"User-Agent": "Mozilla/5.0"}, limit=2 * 1024 * 1024)
+    return json.loads(body.decode("utf-8", "replace"))
+
+
+def zeno_station(slug):
+    d = _zeno_get(ZENO + urllib.parse.quote(slug) + "/")
+    url = d.get("streamURL") or ""
+    if not url.startswith(("http://", "https://")):
+        return None
+    logo = d.get("metaLogo") or ""
+    return {
+        "uuid": "zeno:" + slug,
+        "name": (d.get("title") or "").strip(),
+        "url": url,
+        "favicon": logo,
+        "homepage": "https://zeno.fm/radio/%s/" % slug,
+        "country": d.get("country") or "",
+        "countrycode": country_code(d.get("country")),
+        "tags": [t for t in [(d.get("genre") or "").lower(), "zeno.fm"] if t and t != "general"],
+        "codec": "",
+        "bitrate": 0,
+        "votes": 0,
+    }
+
+
+def zeno_search(variants, max_stations=16):
+    from concurrent.futures import ThreadPoolExecutor
+
+    def find(v):
+        try:
+            return [s.get("slug") for s in _zeno_get(ZENO + "?" + urllib.parse.urlencode({"query": v}))
+                    .get("data", []) if s.get("slug")]
+        except Exception:
+            return []
+
+    pats = name_patterns(" ".join(variants[:1]))
+    with ThreadPoolExecutor(max_workers=6) as ex:
+        found = list(ex.map(find, variants[:6]))
+    slugs = []
+    for batch in found:
+        for sl in batch[:8]:
+            if sl not in slugs:
+                slugs.append(sl)
+    slugs = slugs[:max_stations]
+
+    def detail(sl):
+        try:
+            return zeno_station(sl)
+        except Exception:
+            return None
+
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        res = [c for c in ex.map(detail, slugs) if c]
+    res.sort(key=lambda c: not matches_name(pats, c["name"]))
+    return res
+
+
+def name_patterns(q):
+    """Word patterns for every spelling of q (Arabic + Latin), used to tell real matches apart."""
+    pats = []
+    for v in query_variants(q):
+        v = norm_ar(v).lower().strip()
+        if len(v) >= 3:
+            pats.append(re.compile(r"(?<!\w)" + re.escape(v) + r"(?!\w)"))
+    return pats
+
+
+def matches_name(pats, name):
+    n = norm_ar(name or "").lower()
+    return any(p.search(n) for p in pats)
+
+
+def _iso_countries():
+    try:
+        with open("/usr/share/iso-codes/json/iso_3166-1.json", encoding="utf-8") as f:
+            return json.load(f).get("3166-1", [])
+    except (OSError, ValueError):
+        return []
+
+
+def country_names(lang):
+    """{code: name} in the UI language, from the system iso-codes translations."""
+    import gettext
+    try:
+        tr = gettext.translation("iso_3166-1", languages=[lang]).gettext if lang and lang != "en" else None
+    except OSError:
+        tr = None
+    names = {}
+    for c in _iso_countries():
+        n = c.get("common_name") or c.get("name") or ""
+        loc = tr(n) if tr else n
+        if tr and loc == n and c.get("name"):
+            loc = tr(c["name"])
+        names[c["alpha_2"]] = re.sub("[ً-ْ]", "", loc)       # no tashkeel: cleaner, sorts right
+    return names
+
+
+def countries(lang="en"):
     """Every country that has stations: [{code, name, count}], most stations first."""
+    local = country_names(lang)
     seen = {}
     for c in api("/countries", {"hidebroken": "true"}):
         code = (c.get("iso_3166_1") or "").upper()
         if len(code) != 2 or not c.get("stationcount"):
             continue
         if code not in seen or c["stationcount"] > seen[code]["count"]:
-            seen[code] = {"code": code, "name": c.get("name") or code, "count": c["stationcount"]}
+            seen[code] = {"code": code, "name": local.get(code) or c.get("name") or code,
+                          "count": c["stationcount"]}
     return sorted(seen.values(), key=lambda c: -c["count"])
 
 
@@ -470,23 +598,30 @@ def audio_probe(url, seconds=6):
 
 def same_station(a, b):
     na, nb = norm_ar(a).lower(), norm_ar(b).lower()
-    return bool(na) and bool(nb) and (na == nb or na in nb or nb in na)
+    if not na or not nb:
+        return False
+    if na == nb or na in nb or nb in na:
+        return True
+    # "عبدالحليم حافظ Abdel Halim Hafez" vs "Abdel Halim Radio", "وردة" vs "اغاني ورده الجزائرية"
+    return matches_name(name_patterns(a), b)
 
 
 def find_working_alternative(st):
-    """A different URL for the same station from the directory, verified to carry audio."""
+    """A different URL for the same station from the directories, verified to carry audio."""
+    name = re.sub(r"\s+", " ", st.get("name", "")).strip()
     try:
-        cands = search({"q": st.get("name", ""), "limit": 15})
+        cands = search({"q": name, "limit": 40})
     except Exception:
         return None
+    pats = name_patterns(name)
+    pool = [c for c in cands if c["url"] != st.get("url") and same_station(name, c["name"])]
+    pool.sort(key=lambda c: -sum(1 for p in pats if p.search(norm_ar(c["name"]).lower())))
     tried = 0
-    for c in cands:
-        if c["url"] == st.get("url") or not same_station(st.get("name", ""), c["name"]):
-            continue
+    for c in pool:
         tried += 1
         if audio_probe(c["url"], seconds=4)[0] == "ok":
             return c
-        if tried >= 3:
+        if tried >= 5:
             break
     return None
 
@@ -599,7 +734,7 @@ def main(argv):
         elif cmd == "logo":
             out({"logo": fetch_logo(arg) or ""})
         elif cmd == "countries":
-            out(countries())
+            out(countries(arg if arg != "-" else "en"))
         elif cmd == "check":
             out(check(json.loads(arg)))
         elif cmd == "sitelogo":

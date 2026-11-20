@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Aurora Radio playback daemon.
+"""Aurora Waves playback daemon.
 
 Owns one mpv process, keeps playback state (with auto-retry for expiring stream
 links), and exposes it on D-Bus as an MPRIS2 player so that media controllers,
@@ -27,7 +27,7 @@ MPV_SOCK = os.path.join(RUN, "aurora-radiod-mpv.sock")
 BUS_NAME = "org.mpris.MediaPlayer2.auroraradio"
 OBJ_PATH = "/org/mpris/MediaPlayer2"
 IDLE_EXIT_SECS = 180          # daemon leaves after being stopped this long
-APP_NAME = "Aurora Radio"
+APP_NAME = "Aurora Waves"
 DESKTOP_ID = "aurora-radio"          # MPRIS DesktopEntry -> icon and name in media controllers
 
 MPRIS_XML = """
@@ -75,20 +75,24 @@ MPRIS_XML = """
 """
 
 LOCAL_KINDS = ("file", "folder", "playlist")
+# kinds made of tracks (pause instead of stop, seek, next/prev move between tracks)
+TRACK_KINDS = LOCAL_KINDS + ("yt",)
+DATA = os.path.join(os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share"), "aurora-radio")
+YTDLP_WRAPPER = os.path.join(DATA, "bin", "yt-dlp")     # fresh yt-dlp kept by ytmusic.py
 
 
 def install_desktop_entry():
     """Media controllers find a player's icon and name through its .desktop file."""
     here = os.path.dirname(os.path.abspath(__file__))
-    icon = os.path.normpath(os.path.join(here, "..", "images", "aurora-radio.svg"))
+    icon = os.path.normpath(os.path.join(here, "..", "images", "aurora-waves.svg"))
     apps = os.path.join(os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share"), "applications")
     path = os.path.join(apps, DESKTOP_ID + ".desktop")
     body = "\n".join([
         "[Desktop Entry]",
         "Type=Application",
-        "Name=Aurora Radio",
-        "Name[ar]=راديو أورورا",
-        "Comment=Live radio widget for KDE Plasma",
+        "Name=Aurora Waves",
+        "Name[ar]=أمواج أورورا",
+        "Comment=World radio, YouTube Music and your music for KDE Plasma",
         "Icon=" + icon,
         "Exec=true",
         "NoDisplay=true",
@@ -111,6 +115,10 @@ def clean_title(t):
     if not re.search(r"\w", t) or t.lower() in ("unknown", "unknown - unknown", "n/a", "null", "untitled"):
         return ""
     return t
+
+
+def yt_url(video_id):
+    return "https://music.youtube.com/watch?v=" + video_id
 
 
 def station_kind(st):
@@ -161,7 +169,8 @@ class Mpv:
              "--input-ipc-server=" + MPV_SOCK, "--volume=" + str(volume),
              "--ytdl-format=bestaudio/best", "--cache=yes", "--cache-secs=15",
              "--network-timeout=20", "--audio-client-name=aurora-radio",
-             "--title=" + APP_NAME, "--load-scripts=no"],
+             "--title=" + APP_NAME, "--load-scripts=no", "--prefetch-playlist=yes"]
+            + (["--script-opts=ytdl_hook-ytdl_path=" + YTDLP_WRAPPER] if os.access(YTDLP_WRAPPER, os.X_OK) else []),
             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         GLib.timeout_add(80, self._try_connect, time.time())
 
@@ -294,7 +303,17 @@ class Daemon:
         self.mpv.command("set_property", "loop-playlist", "inf" if kind in ("folder", "playlist") else "no")
         self.mpv.command("set_property", "pause", False)
         self.mpv.command("set_property", "volume", self.volume)
-        self.mpv.command("loadfile", st.get("url", ""), "replace")
+        queue = st.get("queue") if kind == "yt" else None
+        if queue:
+            # YouTube Music queue: one playlist entry per song, starting at the chosen one
+            # queue everything first, then jump: no time wasted fetching song 1 when you picked song 7
+            self.mpv.command("stop")
+            for t in queue:
+                self.mpv.command("loadfile", yt_url(t["id"]), "append")
+            start = int(st.get("start") or 0)
+            self.mpv.command("set_property", "playlist-pos", start if 0 <= start < len(queue) else 0)
+        else:
+            self.mpv.command("loadfile", st.get("url", ""), "replace")
         if not local:
             self.mpv.props.pop("metadata", None)
         self.publish()
@@ -310,8 +329,38 @@ class Daemon:
     def is_local(self):
         return self.current is not None and station_kind(self.current) in LOCAL_KINDS
 
+    def is_tracks(self):
+        return self.current is not None and station_kind(self.current) in TRACK_KINDS
+
+    def is_yt(self):
+        return self.current is not None and station_kind(self.current) == "yt"
+
+    def yt_track(self):
+        """Metadata of the queue entry mpv is on (YouTube Music), or {}."""
+        q = (self.current or {}).get("queue") or []
+        pos = self.mpv.props.get("playlist-pos")
+        if self.is_yt() and isinstance(pos, int) and 0 <= pos < len(q):
+            return q[pos]
+        return {}
+
+    def queue_add(self, items, play_next=False):
+        """Add songs to the playing YouTube Music queue (after the current song, or at the end)."""
+        if not self.is_yt() or not self.mpv.alive():
+            return False
+        q = self.current.setdefault("queue", [])
+        pos = self.mpv.props.get("playlist-pos")
+        pos = pos if isinstance(pos, int) and pos >= 0 else len(q) - 1
+        at = pos + 1 if play_next else len(q)
+        for k, t in enumerate(items):
+            q.insert(at + k, t)
+            self.mpv.command("loadfile", yt_url(t["id"]), "append")
+            if play_next:
+                # appended at the end; move it right after the current song
+                self.mpv.command("playlist-move", len(q) - 1, at + k)
+        self.publish()
+        return True
     def pause(self):
-        if self.is_local() and self.state in ("playing", "connecting"):
+        if self.is_tracks() and self.state in ("playing", "connecting"):
             self.mpv.command("set_property", "pause", True)
             self.state = "paused"
             self.publish()
@@ -335,7 +384,13 @@ class Daemon:
 
     def step(self, delta, prefer_track=False):
         # inside a local playlist/folder, media "next" moves between tracks
-        if prefer_track and self.is_local() and (self.mpv.props.get("playlist-count") or 0) > 1:
+        if self.is_yt() or (prefer_track and self.is_local() and (self.mpv.props.get("playlist-count") or 0) > 1):
+            if self.is_yt():
+                pos, n = self.mpv.props.get("playlist-pos") or 0, self.mpv.props.get("playlist-count") or 0
+                if (delta > 0 and pos >= n - 1) or (delta < 0 and pos <= 0):
+                    if delta < 0:
+                        self.mpv.command("seek", 0, "absolute")
+                    return
             self.mpv.command("playlist-next" if delta > 0 else "playlist-prev", "force")
             return
         if not self.stations:
@@ -372,8 +427,8 @@ class Daemon:
         if self.state == "paused":
             return
         if p.get("idle-active", True):
-            if self.state == "playing" and self.is_local() and station_kind(self.current) == "file":
-                self.stop()          # single local file finished
+            if self.state == "playing" and station_kind(self.current) in ("file", "yt"):
+                self.stop()          # single local file / YouTube Music queue finished
             elif elapsed > 3:
                 self.fail_or_retry()
             return
@@ -416,6 +471,10 @@ class Daemon:
         meta = p.get("metadata") or {}
         lower = {str(k).lower(): v for k, v in meta.items()}
         icy = clean_title(lower.get("icy-title") or lower.get("streamtitle") or "")
+        if self.is_yt():
+            t = self.yt_track()
+            title = t.get("title") or clean_title(p.get("media-title")) or name
+            return title, t.get("artist") or st.get("subtitle") or name, t.get("album") or name
         if self.is_local():
             title = clean_title(lower.get("title")) or clean_title(p.get("media-title")) or name
             artist = lower.get("artist") or name
@@ -427,8 +486,12 @@ class Daemon:
     def status(self):
         p = self.mpv.props
         title, artist, _ = self.titles()
-        local = self.is_local()
+        local = self.is_tracks()
+        yt = self.yt_track()
         return {
+            "yt": self.is_yt(),
+            "ytId": yt.get("id", ""),
+            "art": yt.get("thumb", ""),
             "daemon": True,
             "state": self.state,
             "currentId": self.current.get("id") if self.current else "",
@@ -460,20 +523,24 @@ class Daemon:
         title, artist, album = self.titles()
         st = self.current or {}
         md = {
-            "mpris:trackid": GLib.Variant("o", "/org/auroraradio/track/%d" % self.track_no),
+            # one id per queue entry so media controllers reload title and cover on every song
+            "mpris:trackid": GLib.Variant("o", "/org/auroraradio/track/%d_%d" % (
+                self.track_no, (self.mpv.props.get("playlist-pos") or 0) if self.is_tracks() else 0)),
             "xesam:title": GLib.Variant("s", title),
             "xesam:artist": GLib.Variant("as", [artist]),
             "xesam:album": GLib.Variant("s", album),
         }
         # always send artUrl: an empty value tells clients to drop the previous station's cover
-        md["mpris:artUrl"] = GLib.Variant("s", st.get("art") or "")
+        md["mpris:artUrl"] = GLib.Variant("s", self.yt_track().get("thumb") or st.get("art") or "")
         dur = self.mpv.props.get("duration")
-        if self.is_local() and dur:
+        if self.is_tracks() and dur:
             md["mpris:length"] = GLib.Variant("x", int(dur * 1e6))
-        if st.get("url", "").startswith("http"):
+        if self.yt_track():
+            md["xesam:url"] = GLib.Variant("s", yt_url(self.yt_track()["id"]))
+        elif st.get("url", "").startswith("http"):
             md["xesam:url"] = GLib.Variant("s", st["url"])
         status = {"playing": "Playing", "connecting": "Playing", "paused": "Paused"}.get(self.state, "Stopped")
-        local = self.is_local()
+        local = self.is_tracks()
         return {
             "PlaybackStatus": GLib.Variant("s", status),
             "Rate": GLib.Variant("d", 1.0),
@@ -523,9 +590,9 @@ class Daemon:
                 self.step(1, prefer_track=True)
             elif method == "Previous":
                 self.step(-1, prefer_track=True)
-            elif method == "Seek" and self.is_local():
+            elif method == "Seek" and self.is_tracks():
                 self.mpv.command("seek", params.unpack()[0] / 1e6, "relative")
-            elif method == "SetPosition" and self.is_local():
+            elif method == "SetPosition" and self.is_tracks():
                 self.mpv.command("seek", params.unpack()[1] / 1e6, "absolute")
             elif method == "OpenUri":
                 uri = params.unpack()[0]
@@ -564,6 +631,7 @@ class Daemon:
     # ------------------------------------------------------------ control socket
     def handle(self, req):
         cmd = req.get("cmd")
+        reply_extra = {}
         if "stations" in req and isinstance(req["stations"], list):
             self.stations = req["stations"]
             if self.current:
@@ -591,6 +659,19 @@ class Daemon:
             self.step(-1)
         elif cmd == "volume":
             self.set_volume(req.get("v", self.volume))
+        elif cmd == "seek" and self.is_tracks():
+            self.mpv.command("seek", float(req.get("pos", 0)), "absolute")
+        elif cmd == "jump" and self.is_tracks():
+            # pick a song of the playing queue
+            self.mpv.command("set_property", "playlist-pos", int(req.get("index", 0)))
+            if self.state == "paused":
+                self.mpv.command("set_property", "pause", False)
+                self.state = "playing"
+        elif cmd == "enqueue":
+            if not self.queue_add(req.get("tracks") or [], bool(req.get("next"))):
+                reply_extra["queued"] = False
+        elif cmd == "queue":
+            reply_extra["queue"] = (self.current or {}).get("queue") or [] if self.is_yt() else []
         elif cmd == "art":
             # cover rendered after playback started (e.g. a preview station)
             for st in self.stations:
@@ -603,7 +684,7 @@ class Daemon:
             self.stop()
             GLib.idle_add(self.loop.quit)
         self.publish()
-        return self.status()
+        return dict(self.status(), **reply_extra)
 
     def _on_client(self, fd, cond, server):
         try:

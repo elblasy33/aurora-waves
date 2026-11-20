@@ -26,6 +26,7 @@ Item {
 
     property bool discovering: false
     property bool checking: false
+    property bool ytOpen: false
     readonly property bool narrow: width < Kirigami.Units.gridUnit * 21
     property string fetchState: ""          // "" | busy | done | none
     property string fetchedName: ""
@@ -107,6 +108,7 @@ Item {
         var st = draft()
         if (formIndex >= 0) {
             st.id = list[formIndex].id
+            if (list[formIndex].ytRef) st.ytRef = list[formIndex].ytRef     // YouTube Music station
             list[formIndex] = st
         } else {
             st.id = Presets.newId()
@@ -184,9 +186,21 @@ Item {
     DiscoverPage {
         anchors.fill: parent
         app: editor.app
-        visible: editor.discovering
+        visible: editor.discovering && !editor.ytOpen
         enabled: editor.formIndex === -1
         onBack: editor.discovering = false
+        onOpenYt: editor.ytOpen = true
+    }
+
+    // ================= YouTube Music page =================
+    YTMusicPage {
+        id: ytPage
+        anchors.fill: parent
+        app: editor.app
+        visible: editor.ytOpen
+        enabled: editor.formIndex === -1
+        // opened from the player header: back returns to the player
+        onBack: { editor.ytOpen = false; if (!editor.discovering) app.editing = false }
     }
 
     // ================= check & repair page =================
@@ -204,7 +218,7 @@ Item {
         anchors.fill: parent
         spacing: Kirigami.Units.largeSpacing
         enabled: editor.formIndex === -1
-        visible: !editor.discovering && !editor.checking
+        visible: !editor.discovering && !editor.checking && !editor.ytOpen
 
         RowLayout {
             Layout.fillWidth: true
@@ -519,7 +533,7 @@ Item {
                         onClicked: editor.fetchFromSource(false)
                     }
                     QQC2.Button {
-                        visible: editor.dKind !== "stream"
+                        visible: editor.dKind !== "stream" && editor.dKind !== "yt"
                         icon.name: editor.dKind === "folder" ? "folder-open" : "document-open"
                         text: app.t("تصفح…")
                         display: editor.narrow ? QQC2.AbstractButton.IconOnly : QQC2.AbstractButton.TextBesideIcon
