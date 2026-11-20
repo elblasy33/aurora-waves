@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.1 — 2026-11-20
+
+- App icon in YouTube-red tones (red to magenta and violet), same note-and-waves design
+
 ## 2.1.0 — 2026-11-20
 
 - **Your YouTube Music library**: liked songs (with count), history, *Shuffle my likes*, your
