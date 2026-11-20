@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.2 — 2026-11-21
+
+- Egypt's Maspero stations (Dailymotion) keep playing when Dailymotion asks for a browser: the
+  widget's yt-dlp now comes with curl_cffi, and a copy installed before this is updated at once
+
 ## 2.1.1 — 2026-11-20
 
 - App icon in YouTube-red tones (red to magenta and violet), same note-and-waves design

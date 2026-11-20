@@ -95,6 +95,10 @@ def status():
         days = (time.time() - os.path.getmtime(STAMP)) / 86400
     except OSError:
         days = -1
+    # yt-dlp needs curl_cffi to present itself as a browser (Dailymotion asks for it): a copy
+    # installed before it was added is treated as stale, so the widget updates it right away
+    if ready and not os.path.isdir(os.path.join(PYLIB, "curl_cffi")):
+        days = 99
     acc = read_json(ACCOUNT) if os.path.exists(AUTH) else None
     return {"ready": ready, "ytmusicapi": v["ytmusicapi"], "ytdlp": v["ytdlp"],
             "updatedDays": round(days, 1), "signedIn": bool(acc), "account": acc or {},
@@ -492,10 +496,10 @@ def main(argv):
         if cmd == "status":
             out(status())
         elif cmd == "setup":
-            pip_install(["ytmusicapi", "yt-dlp"])
+            pip_install(["ytmusicapi", "yt-dlp[curl-cffi]"])
             out(status())
         elif cmd == "update":
-            pip_install(["yt-dlp"])
+            pip_install(["yt-dlp[curl-cffi]"])
             out(status())
         elif cmd == "logout":
             out(logout())
